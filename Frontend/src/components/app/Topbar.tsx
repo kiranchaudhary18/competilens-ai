@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "../AuthContext";
 import {
   Bell,
   Command,
@@ -25,6 +26,18 @@ interface TopbarProps {
 }
 
 export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
+  const { user, logout } = useAuth();
+
+  const initials = user?.fullName
+    ? user.fullName
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase()
+    : "US";
+
+  const roleLabel = user?.role === "OWNER" ? "Owner" : user?.role === "ADMIN" ? "Admin" : "Member";
   return (
     <header className="sticky top-0 z-30 border-b border-[#E2E8F0] bg-white/95 backdrop-blur-md">
       <div className="h-[74px] px-6 flex items-center justify-between gap-4">
@@ -95,31 +108,38 @@ export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
                 className="group flex items-center gap-2.5 p-1.5 pr-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-slate-50 transition duration-200 shrink-0 cursor-pointer shadow-sm"
               >
                 <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#06B6D4] flex items-center justify-center text-xs font-extrabold text-white shadow-sm shrink-0">
-                  AK
+                  {initials}
                 </div>
                 <div className="hidden md:flex flex-col items-start leading-none">
-                  <span className="text-xs font-bold text-[#0F172A]">Alex Kim</span>
-                  <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-wider mt-0.5">Admin</span>
+                  <span className="text-xs font-bold text-[#0F172A]">{user?.fullName || "User"}</span>
+                  <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-wider mt-0.5">{roleLabel}</span>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#0F172A] transition" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 bg-white/95 backdrop-blur-md shadow-lg rounded-2xl p-1.5 border border-[#E2E8F0]">
               <DropdownMenuLabel className="px-2.5 py-2">
-                <div className="text-xs.5 font-bold text-[#0F172A]">Alex Kim</div>
-                <div className="text-[10px] font-semibold text-[#64748B] mt-0.5">alex@competilens.ai</div>
+                <div className="text-xs.5 font-bold text-[#0F172A]">{user?.fullName || "User"}</div>
+                <div className="text-[10px] font-semibold text-[#64748B] mt-0.5">{user?.email || ""}</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#E2E8F0]" />
-              <DropdownMenuItem className="gap-2 rounded-xl px-2.5 py-2 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] cursor-pointer hover:bg-slate-50">
-                <User className="w-4 h-4 text-[#64748B]" />
-                <span>Profile</span>
+              <DropdownMenuItem asChild className="gap-2 rounded-xl px-2.5 py-2 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] cursor-pointer hover:bg-slate-50">
+                <Link to="/settings" className="flex items-center gap-2 w-full">
+                  <User className="w-4 h-4 text-[#64748B]" />
+                  <span>Profile</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 rounded-xl px-2.5 py-2 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] cursor-pointer hover:bg-slate-50">
-                <Settings className="w-4 h-4 text-[#64748B]" />
-                <span>Settings</span>
+              <DropdownMenuItem asChild className="gap-2 rounded-xl px-2.5 py-2 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] cursor-pointer hover:bg-slate-50">
+                <Link to="/settings" className="flex items-center gap-2 w-full">
+                  <Settings className="w-4 h-4 text-[#64748B]" />
+                  <span>Settings</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#E2E8F0]" />
-              <DropdownMenuItem className="gap-2 rounded-xl px-2.5 py-2 text-xs.5 font-bold text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer">
+              <DropdownMenuItem
+                onClick={logout}
+                className="gap-2 rounded-xl px-2.5 py-2 text-xs.5 font-bold text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+              >
                 <LogOut className="w-4 h-4" />
                 <span>Sign out</span>
               </DropdownMenuItem>

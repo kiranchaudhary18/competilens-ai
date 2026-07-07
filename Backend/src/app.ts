@@ -5,6 +5,8 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import { ZodError } from "zod";
+import authRoutes from "./modules/auth/routes/auth.routes";
 
 const app = express();
 
@@ -43,7 +45,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// 8. Base Health Route
+// 8. Register Routes
+app.use("/auth", authRoutes);
+
+// 9. Base Health Route
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -52,7 +57,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// 9. 404 Route handler
+// 10. 404 Route handler
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({
     success: false,
@@ -60,16 +65,28 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// 10. Global Error Handler Middleware
+// 11. Global Error Handler Middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  let statusCode = err.statusCode || 500;
+  let message = err.message || "Internal Server Error";
+  let errors: any = undefined;
+
+  // Handle Zod Validation Errors
+  if (err instanceof ZodError) {
+    statusCode = 400;
+    message = "Validation Error";
+    errors = err.issues.map((e: any) => ({
+      field: e.path.join("."),
+      message: e.message
+    }));
+  }
   
   console.error(`[Error Handler] ${statusCode} - ${message}`, err.stack);
   
   res.status(statusCode).json({
     success: false,
     message,
+    errors,
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined
   });
 });

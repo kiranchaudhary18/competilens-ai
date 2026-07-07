@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../components/AuthContext";
 import {
   User,
   Settings,
@@ -66,15 +67,27 @@ const leftMenuTabs: TabItem[] = [
   { id: "about", label: "About", desc: "System details and updates feed", icon: Info },
 ];
 
-export function SettingsPage() {
+
+
+function SettingsPage() {
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [isDirty, setIsDirty] = useState(false);
 
-  // Form states to mock modification
-  const [profileName, setProfileName] = useState("Alex Kim");
-  const [profileEmail, setProfileEmail] = useState("alex@competilens.ai");
-  const [wsName, setWsName] = useState("Acme Corp");
-  const [wsUrl, setWsUrl] = useState("https://competilens.ai/acme");
+  // Form states to represent profile details
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [wsName, setWsName] = useState("");
+  const [wsUrl, setWsUrl] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.fullName || "");
+      setProfileEmail(user.email || "");
+      setWsName(user.workspace?.name || "");
+      setWsUrl(user.workspace ? `https://competilens.ai/${user.workspace.slug}` : "");
+    }
+  }, [user]);
   
   // Toggles for notifications
   const [notifs, setNotifs] = useState({
@@ -92,15 +105,25 @@ export function SettingsPage() {
     setIsDirty(true);
   };
 
-  const handleSave = () => {
-    setIsDirty(false);
+  const handleSave = async () => {
+    try {
+      await updateProfile({
+        fullName: profileName,
+        company: wsName,
+      });
+      setIsDirty(false);
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
   };
 
   const handleDiscard = () => {
-    setProfileName("Alex Kim");
-    setProfileEmail("alex@competilens.ai");
-    setWsName("Acme Corp");
-    setWsUrl("https://competilens.ai/acme");
+    if (user) {
+      setProfileName(user.fullName || "");
+      setProfileEmail(user.email || "");
+      setWsName(user.workspace?.name || "");
+      setWsUrl(user.workspace ? `https://competilens.ai/${user.workspace.slug}` : "");
+    }
     setIsDirty(false);
   };
 
