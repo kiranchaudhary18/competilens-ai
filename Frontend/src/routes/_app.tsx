@@ -15,7 +15,7 @@ function AppLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-all duration-300">
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-20" : "lg:pl-60"}`}>
+      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-20" : "lg:pl-[250px]"}`}>
         <Topbar sidebarCollapsed={collapsed} />
         <main className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1320px] mx-auto">
           <AnimatePresence mode="wait" initial={false}>
