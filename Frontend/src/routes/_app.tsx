@@ -8,9 +8,37 @@ export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
+import { useAuth } from "../components/AuthContext";
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { RefreshCw } from "lucide-react";
+
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/signin" });
+    }
+  }, [loading, user, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-8 h-8 text-[#2563EB] animate-spin" />
+          <p className="text-sm font-bold text-[#64748B]">Authenticating session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-all duration-300">

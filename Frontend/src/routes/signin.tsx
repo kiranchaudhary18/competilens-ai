@@ -93,8 +93,11 @@ function EyeIcon({ isOpen }: { isOpen: boolean }) {
   );
 }
 
+import { useAuth } from "../components/AuthContext";
+
 function SignIn() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -102,7 +105,7 @@ function SignIn() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -114,16 +117,20 @@ function SignIn() {
       setError("Please enter your password.");
       return;
     }
-    if (password.length < 6) {
-      setError("Incorrect email or password. Please try again.");
-      return;
-    }
 
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      setLoading(true);
+      await login(email, password);
       navigate({ to: "/dashboard" });
-    }, 1500);
+    } catch (err: any) {
+      if (err.statusCode === 403) {
+        setError("Please verify your email before signing in.");
+      } else {
+        setError(err.message || "Incorrect email or password. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 6 orbiting nodes

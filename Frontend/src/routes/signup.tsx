@@ -103,8 +103,11 @@ function EyeIcon({ isOpen }: { isOpen: boolean }) {
   );
 }
 
+import { useAuth } from "../components/AuthContext";
+
 function SignUp() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [step, setStep] = useState(1); // 1 = Personal, 2 = Company, 3 = Workspace, 4 = Provisioning
 
   // Step 1: Personal
@@ -205,7 +208,7 @@ function SignUp() {
     setStep(3);
   };
 
-  const handleStep3 = (e: React.FormEvent) => {
+  const handleStep3 = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -222,7 +225,20 @@ function SignUp() {
       return;
     }
 
-    setStep(4);
+    try {
+      setLoading(true);
+      await register({
+        fullName,
+        email,
+        password,
+        role: "OWNER",
+      });
+      setStep(4);
+    } catch (err: any) {
+      setError(err.message || "Failed to create workspace. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Step 4 Simulation logic
@@ -873,14 +889,15 @@ function SignUp() {
                     })}
                   </div>
 
+
                   {/* Final enter CTA */}
                   <div className="pt-2">
                     <motion.button
-                      onClick={() => navigate({ to: "/dashboard" })}
+                      onClick={() => navigate({ to: "/signin" })}
                       disabled={provisionStep < provisionLogs.length - 1}
                       className="w-full h-12 rounded-xl bg-gradient-to-r from-[#2563EB] to-[#06B6D4] text-white text-xs.5 font-bold shadow-md hover:shadow-[0_4px_20px_rgba(37,99,235,0.25)] transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      Enter Dashboard <ArrowRight className="w-4.5 h-4.5" />
+                      Proceed to Login <ArrowRight className="w-4.5 h-4.5" />
                     </motion.button>
                   </div>
                 </motion.div>

@@ -1,0 +1,22 @@
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Media/uploads and logs
+uploads/
+logs/
+*.log
+
+# Editor configurations
+.vscode/
+.idea/
+.DS_Store
