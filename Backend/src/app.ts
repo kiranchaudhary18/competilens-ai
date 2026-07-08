@@ -7,6 +7,9 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import { ZodError } from "zod";
 import authRoutes from "./modules/auth/routes/auth.routes";
+import workspaceRoutes from "./modules/workspace/routes/workspace.routes";
+import competitorRoutes from "./modules/competitor/routes/competitor.routes";
+import signalRoutes from "./modules/signal/routes/signal.routes";
 
 const app = express();
 
@@ -47,6 +50,9 @@ app.use(limiter);
 
 // 8. Register Routes
 app.use("/auth", authRoutes);
+app.use("/workspace", workspaceRoutes);
+app.use("/competitors", competitorRoutes);
+app.use("/signals", signalRoutes);
 
 // 9. Base Health Route
 app.get("/", (req: Request, res: Response) => {

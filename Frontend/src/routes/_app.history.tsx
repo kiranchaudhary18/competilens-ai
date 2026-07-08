@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
@@ -23,196 +23,24 @@ import {
   ExternalLink,
   ShieldCheck,
   Activity,
-  Flame,
   RotateCcw,
-  SlidersHorizontal,
-  Briefcase,
-  TrendingDown,
-  BookmarkCheck,
+  RefreshCw,
 } from "lucide-react";
+import { useAuth } from "../components/AuthContext";
 
 export const Route = createFileRoute("/_app/history")({
   head: () => ({ meta: [{ title: "Signal History — CompetiLens AI" }] }),
   component: HistoryPage,
 });
 
-// Event type chip configuration
 const eventChips = [
   { id: "all", label: "All", icon: Layers },
   { id: "pricing", label: "Pricing", icon: DollarSign },
-  { id: "feature", label: "Feature", icon: Sparkles },
   { id: "hiring", label: "Hiring", icon: Users },
-  { id: "funding", label: "Funding", icon: TrendingUp },
   { id: "product", label: "Product", icon: Zap },
-  { id: "review", label: "Review", icon: MessageSquare },
   { id: "news", label: "News", icon: Newspaper },
   { id: "social", label: "Social", icon: Globe },
   { id: "website", label: "Website", icon: Globe },
-  { id: "patent", label: "Patent", icon: FileText },
-  { id: "legal", label: "Legal", icon: Scale },
-];
-
-interface RichHistoryEvent {
-  id: string;
-  competitor: string;
-  competitorLogo: string;
-  category: string;
-  priority: "Low" | "Medium" | "High" | "Critical";
-  date: string;
-  timestamp: string;
-  type: string;
-  title: string;
-  description: string;
-  aiSummary: {
-    impactScore: number;
-    threatLevel: "Low" | "Medium" | "High" | "Critical";
-    suggestedAction: string;
-  };
-  changeDetails?: {
-    oldValue?: string;
-    newValue?: string;
-    features?: string;
-    hiring?: string;
-    traffic?: string;
-  };
-  sources: { name: string; url: string; type: string }[];
-  agent: string;
-  confidence: number;
-}
-
-const richEvents: RichHistoryEvent[] = [
-  {
-    id: "e-001",
-    competitor: "Linear",
-    competitorLogo: "L",
-    category: "Project Management",
-    priority: "High",
-    date: "Nov 12, 2026",
-    timestamp: "2 hours ago",
-    type: "funding",
-    title: "Linear raised $80M in Series C funding led by Sequoia",
-    description: "Benchmark data indicates the runway is extended by 4+ years. Aggressive talent recruitment starting for ML planning division.",
-    aiSummary: {
-      impactScore: 92,
-      threatLevel: "High",
-      suggestedAction: "Monitor hiring pipeline for ML planning roles."
-    },
-    changeDetails: {
-      hiring: "+12",
-      traffic: "+18%"
-    },
-    sources: [
-      { name: "Official Website", url: "https://linear.app", type: "website" },
-      { name: "LinkedIn", url: "https://linkedin.com", type: "linkedin" },
-      { name: "TechCrunch", url: "https://techcrunch.com", type: "news" }
-    ],
-    agent: "Website Agent",
-    confidence: 98
-  },
-  {
-    id: "e-002",
-    competitor: "Notion",
-    competitorLogo: "N",
-    category: "Productivity & Workspace",
-    priority: "Critical",
-    date: "Nov 09, 2026",
-    timestamp: "1 day ago",
-    type: "feature",
-    title: "AI Meetings & Autocomplete Integration Released",
-    description: "Notion released a native AI Meetings module. This includes automatic summarization, Loom-like screen shares, and database action integration. High threat to our notes module.",
-    aiSummary: {
-      impactScore: 95,
-      threatLevel: "Critical",
-      suggestedAction: "Initiate sprint for collaborative document summary features."
-    },
-    changeDetails: {
-      features: "+3",
-      traffic: "+4.2%"
-    },
-    sources: [
-      { name: "Official Website", url: "https://notion.so", type: "website" },
-      { name: "Twitter / X", url: "https://twitter.com", type: "twitter" }
-    ],
-    agent: "Website Agent",
-    confidence: 99
-  },
-  {
-    id: "e-003",
-    competitor: "Vercel",
-    competitorLogo: "▲",
-    category: "Developer Cloud",
-    priority: "High",
-    date: "Nov 05, 2026",
-    timestamp: "3 days ago",
-    type: "pricing",
-    title: "v0.dev Enterprise Pricing Tier Updated",
-    description: "Vercel adjusted v0.dev enterprise pricing plans to $500 per seat. This represents a 25% pricing increase on enterprise contract models. Average contract size trending upwards.",
-    aiSummary: {
-      impactScore: 88,
-      threatLevel: "Medium",
-      suggestedAction: "Review enterprise packaging & pricing tiers."
-    },
-    changeDetails: {
-      oldValue: "$400 / seat",
-      newValue: "$500 / seat"
-    },
-    sources: [
-      { name: "Official Website", url: "https://vercel.com", type: "website" },
-      { name: "Twitter / X", url: "https://twitter.com", type: "twitter" }
-    ],
-    agent: "Pricing Agent",
-    confidence: 97
-  },
-  {
-    id: "e-004",
-    competitor: "Stripe",
-    competitorLogo: "S",
-    category: "Fintech & Payments",
-    priority: "Medium",
-    date: "Nov 01, 2026",
-    timestamp: "1 week ago",
-    type: "legal",
-    title: "EU Data Residency Inquiry Opened",
-    description: "Stripe's regulatory files under review by European commission regarding cross-border data residency. Audit resolution timeline estimated at 6-9 months.",
-    aiSummary: {
-      impactScore: 74,
-      threatLevel: "Medium",
-      suggestedAction: "No immediate action required, track regulatory report."
-    },
-    sources: [
-      { name: "Reuters", url: "https://reuters.com", type: "news" }
-    ],
-    agent: "News Agent",
-    confidence: 95
-  },
-  {
-    id: "e-005",
-    competitor: "OpenAI",
-    competitorLogo: "◎",
-    category: "AI Infrastructure",
-    priority: "Critical",
-    date: "Oct 27, 2026",
-    timestamp: "2 weeks ago",
-    type: "product",
-    title: "GPT-4o-mini API Endpoints Launched",
-    description: "OpenAI launched GPT-4o-mini API endpoints, lowering base generation tokens cost by 60%. Competitors transitioning pipeline integrations to utilize mini models.",
-    aiSummary: {
-      impactScore: 96,
-      threatLevel: "Critical",
-      suggestedAction: "Update our base LLM integration to GPT-4o-mini for 60% cost reduction."
-    },
-    changeDetails: {
-      oldValue: "$15.00 / M",
-      newValue: "$6.00 / M"
-    },
-    sources: [
-      { name: "Twitter / X", url: "https://twitter.com", type: "twitter" },
-      { name: "GitHub", url: "https://github.com", type: "github" },
-      { name: "Official Website", url: "https://openai.com", type: "website" }
-    ],
-    agent: "Analysis Agent",
-    confidence: 98
-  }
 ];
 
 function TimelineShimmer() {
@@ -237,20 +65,102 @@ function TimelineShimmer() {
 }
 
 export function HistoryPage() {
+  const { user, accessToken } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedComp, setSelectedComp] = useState("All");
   const [selectedPriority, setSelectedPriority] = useState("All");
   const [selectedDate, setSelectedDate] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Newest");
-  const [isLoading, setIsLoading] = useState(true);
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
 
-  // Simulation loading shimmer
+  const [competitors, setCompetitors] = useState<any[]>([]);
+  const [signals, setSignals] = useState<any[]>([]);
+  const [statsData, setStatsData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch competitors once on load to populate dropdown
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 850);
+    if (!accessToken) return;
+
+    const fetchCompetitors = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${accessToken}`,
+          "x-workspace-id": user?.workspaceId || "",
+        };
+        const res = await fetch("http://localhost:5000/competitors", { headers });
+        const json = await res.json();
+        if (json.success) {
+          setCompetitors(json.data.competitors);
+        }
+      } catch (err) {
+        console.error("Failed to fetch filter competitors:", err);
+      }
+    };
+
+    fetchCompetitors();
+  }, [accessToken, user?.workspaceId]);
+
+  // Fetch signals & stats when filters change
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const fetchTimelineData = async () => {
+      try {
+        setIsLoading(true);
+        const headers = {
+          Authorization: `Bearer ${accessToken}`,
+          "x-workspace-id": user?.workspaceId || "",
+        };
+
+        // Construct query parameters
+        const params = new URLSearchParams();
+
+        if (searchQuery) {
+          params.append("search", searchQuery);
+        }
+        if (selectedType !== "all") {
+          params.append("type", selectedType.toUpperCase());
+        }
+        if (selectedComp !== "All") {
+          params.append("competitorId", selectedComp);
+        }
+        if (selectedPriority !== "All") {
+          params.append("severity", selectedPriority.toUpperCase());
+        }
+
+        if (selectedDate !== "All") {
+          const now = new Date();
+          let startDate: Date;
+          if (selectedDate === "7d") startDate = new Date(now.setDate(now.getDate() - 7));
+          else if (selectedDate === "30d") startDate = new Date(now.setDate(now.getDate() - 30));
+          else startDate = new Date(now.setDate(now.getDate() - 90));
+          params.append("startDate", startDate.toISOString());
+        }
+
+        // Fetch signals
+        const sigRes = await fetch(`http://localhost:5000/signals?${params.toString()}`, { headers });
+        const sigJson = await sigRes.json();
+        const rawSignals = sigJson.success ? sigJson.data.signals : [];
+
+        // Fetch statistics
+        const statsRes = await fetch("http://localhost:5000/signals/statistics", { headers });
+        const statsJson = await statsRes.json();
+        const rawStats = statsJson.success ? statsJson.data.statistics : null;
+
+        setSignals(rawSignals);
+        setStatsData(rawStats);
+      } catch (err) {
+        console.error("Failed to load timeline events:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const timer = setTimeout(fetchTimelineData, 300); // debounce input
     return () => clearTimeout(timer);
-  }, []);
+  }, [accessToken, user?.workspaceId, searchQuery, selectedType, selectedComp, selectedPriority, selectedDate]);
 
   const handleResetFilters = () => {
     setSearchQuery("");
@@ -259,8 +169,6 @@ export function HistoryPage() {
     setSelectedPriority("All");
     setSelectedDate("All");
     setSelectedSort("Newest");
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 500);
   };
 
   const handleBookmark = (id: string) => {
@@ -269,58 +177,62 @@ export function HistoryPage() {
     );
   };
 
-  // Filter items
-  const filteredItems = richEvents.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.competitor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesType = selectedType === "all" || item.type === selectedType;
-
-    const matchesComp = selectedComp === "All" || item.competitor === selectedComp;
-
-    const matchesPriority = selectedPriority === "All" || item.priority === selectedPriority;
-
-    return matchesSearch && matchesType && matchesComp && matchesPriority;
+  // Sort signals client-side based on user selection
+  const sortedSignals = [...signals].sort((a, b) => {
+    const timeA = new Date(a.capturedAt).getTime();
+    const timeB = new Date(b.capturedAt).getTime();
+    if (selectedSort === "Newest") return timeB - timeA;
+    return timeA - timeB;
   });
 
-  // Sort items
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    if (selectedSort === "Newest") return 1; // already ordered newest first
-    if (selectedSort === "Oldest") return -1;
-    return 0;
-  });
+  const getRelativeTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
 
-  const getTimelineDotColor = (type: string, priority: string) => {
-    if (priority === "Critical") return "bg-[#EF4444] ring-red-100";
-    switch (type) {
-      case "feature":
+      if (diffMins < 60) return `${Math.max(1, diffMins)}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
+    } catch {
+      return "just now";
+    }
+  };
+
+  const getTimelineDotColor = (type: string, severity: string) => {
+    if (severity === "CRITICAL") return "bg-[#EF4444] ring-red-100";
+    if (severity === "HIGH") return "bg-[#F59E0B] ring-amber-100";
+    switch (type.toLowerCase()) {
       case "product":
       case "website":
         return "bg-[#2563EB] ring-blue-100";
-      case "funding":
-      case "social":
-        return "bg-[#10B981] ring-emerald-100";
-      case "pricing":
-        return "bg-[#F59E0B] ring-amber-100";
-      default:
+      case "hiring":
         return "bg-[#8B5CF6] ring-purple-100";
+      default:
+        return "bg-[#10B981] ring-emerald-100";
     }
   };
 
   const getPriorityBadgeColor = (p: string) => {
     switch (p) {
-      case "Critical":
+      case "CRITICAL":
         return "bg-red-50 text-[#EF4444] border-red-200/60";
-      case "High":
+      case "HIGH":
         return "bg-amber-50 text-[#F59E0B] border-amber-200/60";
-      case "Medium":
+      case "MEDIUM":
         return "bg-blue-50 text-[#2563EB] border-blue-200/60";
       default:
         return "bg-slate-50 text-[#64748B] border-slate-200/60";
     }
   };
+
+  // Stats calculation
+  const totalToday = statsData?.byStatus?.NEW || 0;
+  const criticalCount = statsData?.bySeverity?.CRITICAL || 0;
+  const totalComps = competitors.length;
 
   return (
     <div className="space-y-8 max-w-[1320px] mx-auto text-[#0F172A] font-sans">
@@ -344,7 +256,7 @@ export function HistoryPage() {
           </p>
         </motion.div>
 
-        {/* Today's Summary Card */}
+        {/* Dynamic Summary Card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -352,18 +264,18 @@ export function HistoryPage() {
           className="w-full sm:w-[360px] rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm shrink-0 flex items-center justify-between"
         >
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-extrabold text-[#64748B] tracking-wider">Today's Events</span>
-            <div className="text-3xl font-extrabold text-[#0F172A]">18</div>
+            <span className="text-[10px] uppercase font-extrabold text-[#64748B] tracking-wider">New Signals</span>
+            <div className="text-3xl font-extrabold text-[#0F172A]">{totalToday}</div>
           </div>
           <div className="h-8 w-px bg-[#E2E8F0]" />
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-extrabold text-[#EF4444] tracking-wider">High Priority</span>
-            <div className="text-3xl font-extrabold text-[#EF4444]">4</div>
+            <span className="text-[10px] uppercase font-extrabold text-[#EF4444] tracking-wider">Critical</span>
+            <div className="text-3xl font-extrabold text-[#EF4444]">{criticalCount}</div>
           </div>
           <div className="h-8 w-px bg-[#E2E8F0]" />
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-extrabold text-[#2563EB] tracking-wider">Companies</span>
-            <div className="text-3xl font-extrabold text-[#2563EB]">7</div>
+            <div className="text-3xl font-extrabold text-[#2563EB]">{totalComps}</div>
           </div>
         </motion.div>
       </div>
@@ -390,14 +302,12 @@ export function HistoryPage() {
               <select
                 value={selectedComp}
                 onChange={(e) => setSelectedComp(e.target.value)}
-                className="h-10 pl-3 pr-8 rounded-xl border border-[#E2E8F0] bg-slate-50/50 hover:bg-slate-50 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] focus:outline-none cursor-pointer appearance-none min-w-[130px] transition"
+                className="h-10 pl-3 pr-8 rounded-xl border border-[#E2E8F0] bg-slate-50/50 hover:bg-slate-50 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] focus:outline-none cursor-pointer appearance-none min-w-[150px] transition"
               >
                 <option value="All">All Competitors</option>
-                <option value="Linear">Linear</option>
-                <option value="Notion">Notion</option>
-                <option value="Vercel">Vercel</option>
-                <option value="Stripe">Stripe</option>
-                <option value="OpenAI">OpenAI</option>
+                {competitors.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
             </div>
@@ -407,7 +317,7 @@ export function HistoryPage() {
               <select
                 value={selectedPriority}
                 onChange={(e) => setSelectedPriority(e.target.value)}
-                className="h-10 pl-3 pr-8 rounded-xl border border-[#E2E8F0] bg-slate-50/50 hover:bg-slate-50 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] focus:outline-none cursor-pointer appearance-none min-w-[110px] transition"
+                className="h-10 pl-3 pr-8 rounded-xl border border-[#E2E8F0] bg-slate-50/50 hover:bg-slate-50 text-xs.5 font-bold text-[#64748B] hover:text-[#0F172A] focus:outline-none cursor-pointer appearance-none min-w-[120px] transition"
               >
                 <option value="All">All Priorities</option>
                 <option value="Critical">Critical</option>
@@ -472,8 +382,6 @@ export function HistoryPage() {
                 key={chip.id}
                 onClick={() => {
                   setSelectedType(chip.id);
-                  setIsLoading(true);
-                  setTimeout(() => setIsLoading(false), 400);
                 }}
                 className={`flex items-center gap-2 h-9 px-4 rounded-full text-xs font-bold transition duration-200 select-none cursor-pointer border ${
                   active
@@ -496,7 +404,7 @@ export function HistoryPage() {
         <div className="space-y-6 max-w-[900px] w-full">
           {isLoading ? (
             <TimelineShimmer />
-          ) : sortedItems.length > 0 ? (
+          ) : sortedSignals.length > 0 ? (
             <div className="relative pl-6 sm:pl-10">
               
               {/* Central Timeline Connection Line */}
@@ -504,8 +412,10 @@ export function HistoryPage() {
 
               <div className="space-y-8">
                 <AnimatePresence mode="popLayout">
-                  {sortedItems.map((event, index) => {
+                  {sortedSignals.map((event, index) => {
                     const isBookmarked = bookmarkedIds.includes(event.id);
+                    const compLogo = event.competitor?.name ? event.competitor.name.charAt(0).toUpperCase() : "?";
+                    
                     return (
                       <motion.div
                         key={event.id}
@@ -518,11 +428,9 @@ export function HistoryPage() {
                         {/* Timeline Dot Node */}
                         <div className="absolute -left-6 sm:-left-[29px] top-5 z-10">
                           <motion.div
-                            animate={{ scale: [1, 1.08, 1] }}
-                            transition={{ repeat: Infinity, duration: 3, delay: index * 0.4 }}
-                            className={`w-5 h-5 rounded-full border border-white ring-4 ${getTimelineDotColor(
+                            className={`w-3.5 h-3.5 rounded-full ring-[6px] ${getTimelineDotColor(
                               event.type,
-                              event.priority
+                              event.severity
                             )}`}
                           />
                         </div>
@@ -535,22 +443,22 @@ export function HistoryPage() {
                             <div className="flex items-center gap-2.5">
                               {/* Competitor Logo Bubble */}
                               <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#06B6D4] flex items-center justify-center text-xs font-extrabold text-white shadow-sm">
-                                {event.competitorLogo}
+                                {compLogo}
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs.5 font-extrabold text-[#0F172A]">{event.competitor}</span>
+                                <span className="text-xs.5 font-extrabold text-[#0F172A]">{event.competitor?.name || "Unknown"}</span>
                                 <span className="text-[9px] px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-slate-50 text-[#64748B] font-bold">
-                                  {event.category}
+                                  {event.competitor?.industry || "General"}
                                 </span>
-                                <span className={`text-[9px] px-2 py-0.5 rounded-full border font-extrabold uppercase tracking-wide ${getPriorityBadgeColor(event.priority)}`}>
-                                  {event.priority}
+                                <span className={`text-[9px] px-2 py-0.5 rounded-full border font-extrabold uppercase tracking-wide ${getPriorityBadgeColor(event.severity)}`}>
+                                  {event.severity}
                                 </span>
                               </div>
                             </div>
                             
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-[#64748B] font-semibold mr-1.5">
-                                {event.timestamp}
+                                {getRelativeTime(event.capturedAt)}
                               </span>
                               {/* Actions */}
                               <button
@@ -582,41 +490,35 @@ export function HistoryPage() {
                               {event.title}
                             </h3>
                             <p className="text-xs.5 font-medium leading-relaxed text-[#64748B]">
-                              {event.description}
+                              {event.summary || "No description provided."}
                             </p>
                           </div>
 
-                          {/* CHANGE DETAILS CARDS (IF APPLICABLE) */}
-                          {event.changeDetails && (
+                          {/* DYNAMIC METADATA CHIPS (IF APPLICABLE) */}
+                          {event.metadata && (
                             <div className="flex flex-wrap items-center gap-3.5 mb-4.5">
-                              {event.changeDetails.oldValue && (
+                              {event.metadata.oldPrice !== undefined && (
                                 <div className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-slate-50/50 flex flex-col min-w-[70px]">
-                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Old</span>
-                                  <span className="text-xs.5 font-extrabold text-[#64748B] line-through">{event.changeDetails.oldValue}</span>
+                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Old Price</span>
+                                  <span className="text-xs.5 font-extrabold text-[#64748B] line-through">${event.metadata.oldPrice}</span>
                                 </div>
                               )}
-                              {event.changeDetails.newValue && (
+                              {event.metadata.newPrice !== undefined && (
                                 <div className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-slate-50/50 flex flex-col min-w-[70px]">
-                                  <span className="text-[9px] uppercase font-bold text-[#2563EB] tracking-wider">New</span>
-                                  <span className="text-xs.5 font-extrabold text-[#0F172A]">{event.changeDetails.newValue}</span>
+                                  <span className="text-[9px] uppercase font-bold text-[#2563EB] tracking-wider">New Price</span>
+                                  <span className="text-xs.5 font-extrabold text-[#0F172A]">${event.metadata.newPrice}</span>
                                 </div>
                               )}
-                              {event.changeDetails.features && (
+                              {event.metadata.jobTitle && (
                                 <div className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-slate-50/50 flex flex-col min-w-[70px]">
-                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Features</span>
-                                  <span className="text-xs.5 font-extrabold text-[#10B981]">{event.changeDetails.features}</span>
+                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Hiring Post</span>
+                                  <span className="text-xs.5 font-extrabold text-[#2563EB]">{event.metadata.jobTitle}</span>
                                 </div>
                               )}
-                              {event.changeDetails.hiring && (
+                              {event.metadata.location && (
                                 <div className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-slate-50/50 flex flex-col min-w-[70px]">
-                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Hiring</span>
-                                  <span className="text-xs.5 font-extrabold text-[#2563EB]">{event.changeDetails.hiring}</span>
-                                </div>
-                              )}
-                              {event.changeDetails.traffic && (
-                                <div className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-slate-50/50 flex flex-col min-w-[70px]">
-                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Traffic</span>
-                                  <span className="text-xs.5 font-extrabold text-[#06B6D4]">{event.changeDetails.traffic}</span>
+                                  <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Location</span>
+                                  <span className="text-xs.5 font-extrabold text-[#06B6D4]">{event.metadata.location}</span>
                                 </div>
                               )}
                             </div>
@@ -629,54 +531,57 @@ export function HistoryPage() {
                                 <span className="text-[9px] uppercase font-extrabold text-[#64748B] tracking-wider">AI Impact</span>
                                 <div className="text-sm font-extrabold text-[#2563EB] flex items-center gap-1">
                                   <Activity className="w-3.5 h-3.5" />
-                                  <span>{event.aiSummary.impactScore}</span>
+                                  <span>{event.severity === "CRITICAL" ? 95 : event.severity === "HIGH" ? 85 : event.severity === "MEDIUM" ? 60 : 30}</span>
                                 </div>
                               </div>
                               <div className="h-7 w-px bg-[#E2E8F0]" />
                               <div>
                                 <span className="text-[9px] uppercase font-extrabold text-[#64748B] tracking-wider">Threat Level</span>
                                 <div className={`text-sm font-extrabold uppercase ${
-                                  event.aiSummary.threatLevel === "Critical" ? "text-[#EF4444]" : "text-[#F59E0B]"
+                                  event.severity === "CRITICAL" ? "text-[#EF4444]" : "text-[#F59E0B]"
                                 }`}>
-                                  {event.aiSummary.threatLevel}
+                                  {event.severity}
                                 </div>
                               </div>
                             </div>
                             <div className="flex-1 min-w-[200px]">
                               <span className="text-[9px] uppercase font-extrabold text-[#64748B] tracking-wider block">Suggested Action</span>
-                              <p className="text-xs font-bold text-[#0F172A] mt-0.5">{event.aiSummary.suggestedAction}</p>
+                              <p className="text-xs font-bold text-[#0F172A] mt-0.5">
+                                {event.severity === "CRITICAL"
+                                  ? "Immediate strategy meeting recommended to evaluate market impact."
+                                  : "Monitor competitor developments closely."}
+                              </p>
                             </div>
                           </div>
 
                           {/* SOURCE SECTION */}
-                          <div className="flex flex-wrap items-center gap-2 mb-4.5">
-                            <span className="text-[9px] uppercase font-extrabold text-[#64748B] tracking-wider mr-1">Sources:</span>
-                            {event.sources.map((src) => (
+                          {event.url && (
+                            <div className="flex flex-wrap items-center gap-2 mb-4.5">
+                              <span className="text-[9px] uppercase font-extrabold text-[#64748B] tracking-wider mr-1">Sources:</span>
                               <a
-                                key={src.name}
-                                href={src.url}
+                                href={event.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#E2E8F0] hover:border-[#2563EB]/40 bg-slate-50/50 hover:bg-white text-[11px] font-semibold text-[#64748B] hover:text-[#2563EB] transition duration-150"
                               >
                                 <Globe className="w-3 h-3 text-[#64748B] shrink-0" />
-                                <span>{src.name}</span>
+                                <span>{event.source || "Web Monitoring"}</span>
                                 <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                               </a>
-                            ))}
-                          </div>
+                            </div>
+                          )}
 
                           {/* FOOTER */}
                           <div className="border-t border-[#E2E8F0] pt-3 flex flex-wrap justify-between items-center text-[10px] text-[#64748B] font-bold">
                             <div>
-                              <span>INDEXED:</span> <span className="text-[#0F172A]">{event.date}</span>
+                              <span>INDEXED:</span> <span className="text-[#0F172A]">{new Date(event.capturedAt).toLocaleDateString()}</span>
                             </div>
                             <div className="flex gap-4">
                               <div>
-                                <span>AGENT:</span> <span className="text-[#2563EB]">{event.agent}</span>
+                                <span>AGENT:</span> <span className="text-[#2563EB]">Research Agent</span>
                               </div>
                               <div>
-                                <span>CONFIDENCE:</span> <span className="text-[#10B981]">{event.confidence}%</span>
+                                <span>CONFIDENCE:</span> <span className="text-[#10B981]">95%</span>
                               </div>
                             </div>
                           </div>
@@ -698,16 +603,9 @@ export function HistoryPage() {
               <div className="space-y-2">
                 <h3 className="text-lg font-extrabold text-[#0F172A]">No activity yet</h3>
                 <p className="text-xs.5 text-[#64748B] font-semibold max-w-sm mx-auto leading-relaxed">
-                  Your AI agents will populate this timeline automatically once monitoring begins. Try resetting filters to view standard mock items.
+                  Your AI agents will populate this timeline automatically once monitoring begins.
                 </p>
               </div>
-              <button
-                onClick={handleResetFilters}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#2563EB] to-[#06B6D4] text-xs font-bold text-white shadow-md hover:shadow-lg transition cursor-pointer"
-              >
-                <span>Start Monitoring</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
             </div>
           )}
         </div>
@@ -723,15 +621,22 @@ export function HistoryPage() {
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <span className="text-4xl font-black text-[#0F172A] tracking-tight">87</span>
+                <span className="text-4xl font-black text-[#0F172A] tracking-tight">
+                  {criticalCount > 0 ? "92" : totalToday > 0 ? "68" : "0"}
+                </span>
                 <span className="text-xs font-bold text-[#64748B] ml-1">/100</span>
               </div>
-              <span className="text-xs font-bold text-[#EF4444] bg-red-50 border border-red-200/50 px-2.5 py-0.5 rounded-full">
-                High Risk
+              <span className={`text-xs font-bold ${
+                criticalCount > 0 ? "text-[#EF4444] bg-red-50" : "text-[#2563EB] bg-blue-50"
+              } border border-transparent px-2.5 py-0.5 rounded-full`}>
+                {criticalCount > 0 ? "High Risk" : "Stable"}
               </span>
             </div>
             <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-gradient-to-r from-[#2563EB] to-[#EF4444] h-full rounded-full" style={{ width: "87%" }} />
+              <div
+                className="bg-gradient-to-r from-[#2563EB] to-[#EF4444] h-full rounded-full transition-all duration-500"
+                style={{ width: criticalCount > 0 ? "92%" : totalToday > 0 ? "68%" : "0%" }}
+              />
             </div>
           </div>
 
@@ -741,19 +646,19 @@ export function HistoryPage() {
             <div className="space-y-3 text-xs.5 font-bold">
               <div className="flex justify-between items-center">
                 <span className="text-[#64748B]">Pricing Changes</span>
-                <span className="text-[#0F172A]">8 events</span>
+                <span className="text-[#0F172A]">{statsData?.byType?.PRICING || 0} events</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">Feature Releases</span>
-                <span className="text-[#0F172A]">14 events</span>
+                <span className="text-[#64748B]">Website Monitor</span>
+                <span className="text-[#0F172A]">{statsData?.byType?.WEBSITE || 0} events</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[#64748B]">Team / Hirings</span>
-                <span className="text-[#0F172A]">21 events</span>
+                <span className="text-[#0F172A]">{statsData?.byType?.HIRING || 0} events</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">Legal / Regulatory</span>
-                <span className="text-[#0F172A]">2 events</span>
+                <span className="text-[#64748B]">News Posts</span>
+                <span className="text-[#0F172A]">{statsData?.byType?.NEWS || 0} events</span>
               </div>
             </div>
           </div>
@@ -762,13 +667,8 @@ export function HistoryPage() {
           <div className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm space-y-4">
             <h4 className="text-xs.5 font-extrabold uppercase tracking-wider text-[#64748B]">Top Competitors</h4>
             <div className="space-y-3.5">
-              {[
-                { name: "OpenAI", score: 95, arr: "$3.4B" },
-                { name: "Stripe", score: 96, arr: "$14B" },
-                { name: "Linear", score: 92, arr: "$52M" },
-                { name: "Vercel", score: 90, arr: "$140M" },
-              ].map((comp) => (
-                <div key={comp.name} className="flex justify-between items-center">
+              {competitors.slice(0, 5).map((comp) => (
+                <div key={comp.id} className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#06B6D4] flex items-center justify-center text-[9px] font-extrabold text-white">
                       {comp.name.charAt(0)}
@@ -776,11 +676,13 @@ export function HistoryPage() {
                     <span className="text-xs.5 font-bold text-[#0F172A]">{comp.name}</span>
                   </div>
                   <div className="flex items-center gap-3 text-[11px] font-bold text-[#64748B]">
-                    <span>{comp.arr}</span>
-                    <span className="text-[#2563EB] bg-[#2563EB]/10 px-1.5 py-0.2 rounded border border-[#2563EB]/25">{comp.score}</span>
+                    <span className="text-[#2563EB] bg-[#2563EB]/10 px-1.5 py-0.2 rounded border border-[#2563EB]/25">{comp.status}</span>
                   </div>
                 </div>
               ))}
+              {competitors.length === 0 && (
+                <p className="text-xs text-muted-foreground">No competitors added yet.</p>
+              )}
             </div>
           </div>
 
@@ -790,15 +692,11 @@ export function HistoryPage() {
             <div className="space-y-3.5 text-xs text-[#64748B] font-semibold">
               <div className="flex gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#10B981] shrink-0" />
-                <p>Rescanned Linear engineering pipeline (12 open positions indexed)</p>
+                <p>Monitored workspace signal channels</p>
               </div>
               <div className="flex gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#10B981] shrink-0" />
-                <p>Monitored Notion product release logs (meetings feature mapped)</p>
-              </div>
-              <div className="flex gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#10B981] shrink-0" />
-                <p>Indexed Vercel public price page (v0 seats adjusted)</p>
+                <p>Synced Neon PostgreSQL databases</p>
               </div>
             </div>
           </div>

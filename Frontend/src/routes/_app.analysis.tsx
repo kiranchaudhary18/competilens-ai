@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { ArrowRight, Globe, Sparkles, Zap, Search, Plus, Compass, Settings2, Paperclip, ChevronDown } from "lucide-react";
-import { competitors } from "@/data/mock";
+import { ArrowRight, Globe, Sparkles, Zap, Search, Plus, Compass, Settings2, Paperclip, ChevronDown, RefreshCw } from "lucide-react";
+import { useAuth } from "../components/AuthContext";
 
 export const Route = createFileRoute("/_app/analysis")({
   head: () => ({ meta: [{ title: "New Analysis — CompetiLens AI" }] }),
@@ -10,14 +10,61 @@ export const Route = createFileRoute("/_app/analysis")({
 });
 
 function NewAnalysis() {
+  const { user, accessToken } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [focusType, setFocusType] = useState("All sources");
   const [showFocusDropdown, setShowFocusDropdown] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const start = (target: string) => {
-    if (!target) return;
-    navigate({ to: "/analyzing" });
+  const start = async (target: string) => {
+    if (!target || !accessToken) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // Clean the target to extract domain name and name
+      let domain = target.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].toLowerCase();
+      if (!domain.includes(".")) {
+        domain = `${domain}.com`;
+      }
+      
+      const nameParts = domain.split(".")[0];
+      const name = nameParts.charAt(0).toUpperCase() + nameParts.slice(1);
+
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "x-workspace-id": user?.workspaceId || "",
+      };
+
+      const res = await fetch("http://localhost:5000/competitors", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name,
+          domain,
+          website: `https://${domain}`,
+          industry: "Technology",
+        }),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        const compId = json.data.competitor.id;
+        navigate({
+          to: "/analyzing",
+          search: { id: compId },
+        });
+      } else {
+        alert(json.message || "Failed to create competitor profile");
+      }
+    } catch (err) {
+      console.error("Failed to start analysis:", err);
+      alert("Error starting competitor analysis. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const suggestions = [
@@ -75,6 +122,7 @@ function NewAnalysis() {
             <textarea
               rows={2}
               value={q}
+              disabled={isSubmitting}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Paste competitor URL or type company name... (e.g. vercel.com or Stripe)"
               onKeyDown={(e) => {
@@ -101,104 +149,69 @@ function NewAnalysis() {
               </button>
 
               {showFocusDropdown && (
-                <div className="absolute top-10 left-0 w-44 rounded-xl border border-border bg-card shadow-card p-1.5 z-10 glass">
-                  {["All sources", "Website focus", "News & PR focus", "Reviews focus"].map((opt) => (
+                <div className="absolute top-10 left-0 w-48 rounded-2xl border border-border bg-card shadow-lg p-1.5 z-20 space-y-0.5">
+                  {["All sources", "Website crawling", "Job boards", "Social & News"].map((type) => (
                     <button
-                      key={opt}
+                      key={type}
+                      type="button"
                       onClick={() => {
-                        setFocusType(opt);
+                        setFocusType(type);
                         setShowFocusDropdown(false);
                       }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-accent/40 text-muted-foreground hover:text-foreground transition"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-muted transition"
                     >
-                      {opt}
+                      {type}
                     </button>
                   ))}
                 </div>
               )}
-
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 h-8.5 px-3 rounded-xl border border-border bg-background text-xs font-semibold text-muted-foreground hover:text-foreground transition cursor-pointer select-none"
-              >
-                <Paperclip className="w-3.5 h-3.5" />
-                <span>Attach URL</span>
-              </button>
             </div>
 
-            {/* Submit Button Right */}
+            {/* Submit Right */}
             <button
-              onClick={() => q.trim() && start(q.trim())}
-              disabled={!q.trim()}
-              className="inline-flex items-center justify-center gap-2 h-9 px-4.5 rounded-xl bg-gradient-primary text-primary-foreground text-xs.5 font-bold shadow-glow hover:opacity-95 hover:-translate-y-0.5 active:translate-y-0 transition duration-200 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+              onClick={() => start(q)}
+              disabled={isSubmitting || !q.trim()}
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-2xl bg-gradient-primary text-primary-foreground text-[14px] font-bold shadow-glow hover:opacity-95 disabled:opacity-55 active:scale-[0.98] transition cursor-pointer"
             >
-              Analyze <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <span>Deploy agents</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         </div>
       </motion.div>
 
-      {/* Suggested competitor pills */}
-      <div className="space-y-3.5 text-center">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Suggested Competitors</div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {suggestions.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => start(item.name)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-border bg-card/45 hover:bg-card hover:border-primary/45 transition duration-250 text-xs.5 font-semibold text-muted-foreground hover:text-foreground"
-            >
-              <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-              <span>{item.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Analyses list */}
+      {/* Suggested suggestions */}
       <div className="space-y-4">
-        <div>
-          <h2 className="text-md font-bold tracking-tight">Recent Analyses</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Quickly view or re-run recent competitor reports.</p>
-        </div>
-
-        <div className="rounded-[24px] border border-border bg-card shadow-card overflow-hidden divide-y divide-border">
-          {competitors.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center justify-between p-4 hover:bg-accent/25 transition duration-200"
+        <h3 className="text-xs.5 font-bold tracking-wider text-muted-foreground uppercase text-center">
+          Or start research with
+        </h3>
+        <div className="flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto">
+          {suggestions.map((s, idx) => (
+            <motion.button
+              key={s.name}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.05 }}
+              onClick={() => {
+                setQ(s.domain);
+                start(s.domain);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-border bg-card hover:bg-slate-50 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 cursor-pointer"
             >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-sm font-bold text-primary-foreground shrink-0 shadow-glow select-none">
-                  {c.logo}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-bold tracking-tight">{c.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{c.domain} · last run {c.lastAnalyzed}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <button
-                  onClick={() => start(c.name)}
-                  className="inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg border border-border bg-background hover:bg-accent/40 text-xs font-semibold text-muted-foreground hover:text-foreground transition cursor-pointer"
-                >
-                  Re-run
-                </button>
-                <button
-                  onClick={() => navigate({ to: "/reports/$id", params: { id: c.id } })}
-                  className="inline-flex items-center gap-1.5 h-8.5 px-3.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15 text-xs font-semibold transition cursor-pointer"
-                >
-                  View Report <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+              <Globe className="w-3.5 h-3.5 text-primary" />
+              <span>{s.name}</span>
+            </motion.button>
           ))}
         </div>
-      </div>
-
-      <div className="text-xs text-muted-foreground text-center inline-flex items-center gap-1.5 justify-center w-full mt-4">
-        <Zap className="w-3 h-3 text-primary animate-pulse" /> Each analysis process uses approximately 120 AI credits.
       </div>
     </div>
   );

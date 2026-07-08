@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Area,
   AreaChart,
@@ -34,43 +34,63 @@ import {
   ArrowRight,
   Sparkles,
   BookOpen,
+  RefreshCw,
+  Globe,
+  DollarSign,
+  Briefcase as BriefcaseIcon,
 } from "lucide-react";
 import { Panel } from "@/components/app/Panel";
-import {
-  actionPlan,
-  competitors,
-  featureMatrix,
-  growthSeries,
-  news,
-  opportunities,
-  pricingSeries,
-  recommendations,
-  reviews,
-  risks,
-  sentimentSeries,
-  swot,
-  history,
-} from "@/data/mock";
+import { useAuth } from "../components/AuthContext";
 
 export const Route = createFileRoute("/_app/reports/$id")({
-  head: ({ params }) => ({ meta: [{ title: `${params.id} — Executive Report` }] }),
+  head: ({ params }) => ({ meta: [{ title: `Competitor Briefing — Executive Report` }] }),
   component: ReportPage,
 });
 
 const chartColors = ["var(--success)", "var(--muted-foreground)", "var(--destructive)"];
 
-// Custom mock for Hiring Trends
-const hiringTrends = [
-  { department: "Engineering", openRoles: 14, growth: "+24% YoY" },
-  { department: "Sales & Marketing", openRoles: 12, growth: "+12% YoY" },
-  { department: "Product & Design", openRoles: 5, growth: "+8% YoY" },
-  { department: "Operations", openRoles: 3, growth: "Stable" },
-];
-
 function ReportPage() {
   const { id } = Route.useParams();
-  const c = competitors.find((x) => x.id === id) ?? competitors[0];
+  const { user, accessToken } = useAuth();
   const [copied, setCopied] = useState(false);
+
+  const [competitor, setCompetitor] = useState<any>(null);
+  const [signals, setSignals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const fetchDetails = async () => {
+      try {
+        setLoading(true);
+        const headers = {
+          Authorization: `Bearer ${accessToken}`,
+          "x-workspace-id": user?.workspaceId || "",
+        };
+
+        // Fetch competitor details
+        const res = await fetch(`http://localhost:5000/competitors/${id}`, { headers });
+        const json = await res.json();
+        if (json.success) {
+          setCompetitor(json.data.competitor);
+        }
+
+        // Fetch competitor specific signals
+        const sigRes = await fetch(`http://localhost:5000/signals?competitorId=${id}`, { headers });
+        const sigJson = await sigRes.json();
+        if (sigJson.success) {
+          setSignals(sigJson.data.signals);
+        }
+      } catch (err) {
+        console.error("Failed to fetch competitor details:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetails();
+  }, [id, accessToken, user?.workspaceId]);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -79,18 +99,41 @@ function ReportPage() {
   };
 
   const handleDownload = () => {
-    alert(`Starting PDF download for ${c.name} Executive Report...`);
+    alert(`Starting PDF download for ${competitor?.name} Executive Report...`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm font-semibold text-muted-foreground">Compiling competitor briefing...</p>
+      </div>
+    );
+  }
+
+  if (!competitor) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <Building2 className="w-12 h-12 text-muted-foreground" />
+        <h2 className="text-xl font-bold text-slate-800">Competitor profile not found</h2>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          The requested profile does not exist or you do not have permission to view it.
+        </p>
+        <Link
+          to="/reports"
+          className="inline-flex h-10 items-center justify-center px-5 rounded-xl bg-primary text-white text-xs font-semibold hover:opacity-90 transition"
+        >
+          Return to Library
+        </Link>
+      </div>
+    );
+  }
 
   const tocItems = [
     { id: "summary", label: "Executive Summary" },
-    { id: "swot", label: "SWOT Analysis" },
-    { id: "pricing", label: "Pricing Analysis" },
-    { id: "features", label: "Capability Matrix" },
-    { id: "hiring", label: "Hiring Trends" },
-    { id: "reviews", label: "Customer Reviews" },
-    { id: "news", label: "Recent News" },
-    { id: "recommendations", label: "AI recommendations" },
+    { id: "pricing", label: "Pricing plans" },
+    { id: "techstack", label: "Technology Stack" },
+    { id: "contacts", label: "Contacts & Leadership" },
     { id: "timeline", label: "Event Timeline" },
   ];
 
@@ -102,7 +145,7 @@ function ReportPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> Reports
         </Link>
         <span>/</span>
-        <span className="text-foreground">{c.name} Executive Briefinging</span>
+        <span className="text-foreground">{competitor.name} Executive Briefing</span>
       </div>
 
       {/* Notion style header card */}
@@ -119,8 +162,8 @@ function ReportPage() {
         {/* Logo Overlap */}
         <div className="relative px-6 sm:px-8 pb-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 sm:-mt-12">
-            <div className="w-20 h-20 rounded-[24px] bg-gradient-primary grid place-items-center text-3xl font-extrabold text-white shadow-card border-4 border-card relative z-10 select-none">
-              {c.logo}
+            <div className="w-20 h-20 rounded-[24px] bg-gradient-primary grid place-items-center text-3xl font-extrabold text-white shadow-card border-4 border-card relative z-10 select-none animate-fade-in">
+              {competitor.name.charAt(0).toUpperCase()}
             </div>
 
             <div className="flex items-center gap-2 relative z-10">
@@ -143,10 +186,12 @@ function ReportPage() {
           {/* Heading Content */}
           <div className="mt-5 space-y-2">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-wider">
-              Autonomous Intelligence brief · v3.0
+              Autonomous Intelligence brief · {competitor.status}
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{c.name}</h1>
-            <p className="text-sm.5 text-muted-foreground max-w-3xl leading-relaxed">{c.summary}</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{competitor.name}</h1>
+            <p className="text-sm.5 text-muted-foreground max-w-3xl leading-relaxed">
+              {competitor.description || `Autonomous monitoring configuration initialized for ${competitor.domain}.`}
+            </p>
           </div>
         </div>
       </motion.div>
@@ -162,12 +207,11 @@ function ReportPage() {
             <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
               Executive Summary
             </h2>
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
               {[
-                { label: "Threat Score", value: c.score.toString(), sub: "+4 vs last check", color: "text-danger" },
-                { label: "Est. ARR", value: c.arr, sub: `+${c.growth}% Growth`, color: "text-primary" },
-                { label: "Sentiment", value: "62%", sub: "Net Positive", color: "text-success" },
-                { label: "Indexed signals", value: "142", sub: "+28 last 30d", color: "text-secondary" },
+                { label: "Industry", value: competitor.industry || "General", sub: competitor.domain, color: "text-primary" },
+                { label: "Company Size", value: competitor.companySize || "Unknown", sub: "Employees headcount", color: "text-secondary" },
+                { label: "Indexed signals", value: String(signals.length), sub: "Total captured events", color: "text-success" },
               ].map((k) => (
                 <div key={k.label} className="rounded-2xl border border-border bg-card/65 p-4.5">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -178,266 +222,109 @@ function ReportPage() {
                 </div>
               ))}
             </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mt-6">
-              <Panel title="Market trajectory" subtitle="Competitor growth vs category median" padded={true}>
-                <div className="h-56 mt-2">
-                  <ResponsiveContainer>
-                    <AreaChart data={growthSeries}>
-                      <defs>
-                        <linearGradient id="rp" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.4} />
-                          <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-                      <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={10} />
-                      <YAxis stroke="var(--muted-foreground)" fontSize={10} />
-                      <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 11 }} />
-                      <Area dataKey="you" name={c.name} stroke="var(--primary)" fill="url(#rp)" strokeWidth={2} />
-                      <Area dataKey="market" name="Category median" stroke="var(--secondary)" fill="transparent" strokeWidth={2} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </Panel>
-
-              <Panel title="Sentiment share" subtitle="Based on 6,214 cross-channel mentions" padded={true}>
-                <div className="h-56 mt-2">
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie data={sentimentSeries} dataKey="value" innerRadius={42} outerRadius={70} paddingAngle={4}>
-                        {sentimentSeries.map((_, i) => (
-                          <Cell key={i} fill={chartColors[i]} stroke="transparent" />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 11 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </Panel>
-            </div>
           </section>
 
-          {/* SWOT Analysis */}
-          <section id="swot" className="space-y-4">
-            <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              SWOT Analysis
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                { title: "Strengths", items: swot.strengths, tone: "success" },
-                { title: "Weaknesses", items: swot.weaknesses, tone: "destructive" },
-                { title: "Opportunities", items: swot.opportunities, tone: "primary" },
-                { title: "Threats", items: swot.threats, tone: "warning" },
-              ].map((s) => (
-                <div key={s.title} className={`rounded-2xl border p-5 ${toneBg(s.tone)}`}>
-                  <div className={`text-xs uppercase font-extrabold tracking-wider ${toneText(s.tone)}`}>
-                    {s.title}
-                  </div>
-                  <ul className="mt-4.5 space-y-3.5 text-xs.5 leading-normal text-muted-foreground">
-                    {s.items.map((it) => (
-                      <li key={it} className="flex gap-2.5 items-start">
-                        <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${toneDot(s.tone)}`} /> 
-                        <span>{it}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Pricing Analysis */}
+          {/* Pricing Plans */}
           <section id="pricing" className="space-y-4">
             <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              Pricing Analysis
+              Pricing Plans
             </h2>
-            <div className="p-5 rounded-2xl border border-border bg-card/65 space-y-6">
-              <p className="text-xs.5 text-muted-foreground leading-relaxed">
-                Comparison of product tiers against our current pricing models (USD/month, per seat).
-              </p>
-              <div className="h-60">
-                <ResponsiveContainer>
-                  <BarChart data={pricingSeries}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-                    <XAxis dataKey="tier" stroke="var(--muted-foreground)" fontSize={10} />
-                    <YAxis stroke="var(--muted-foreground)" fontSize={10} />
-                    <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 11 }} />
-                    <Bar dataKey="you" name="You" fill="var(--primary)" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="competitor" name={c.name} fill="var(--secondary)" radius={[6, 6, 0, 0]} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                  </BarChart>
-                </ResponsiveContainer>
+            {competitor.pricingPlans && competitor.pricingPlans.length > 0 ? (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {competitor.pricingPlans.map((plan: any) => (
+                  <div key={plan.id} className="p-5 rounded-2xl border border-border bg-card/65 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="text-xs uppercase font-extrabold text-primary tracking-wider">
+                        {plan.planName}
+                      </div>
+                      <div className="mt-3 flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-slate-800">${plan.price}</span>
+                        <span className="text-xs font-semibold text-muted-foreground">/{plan.billingType || "mo"}</span>
+                      </div>
+                      {plan.description && (
+                        <p className="mt-3 text-xs.5 text-muted-foreground leading-relaxed">
+                          {plan.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="p-6 text-center border border-dashed border-border rounded-2xl bg-card/40">
+                <DollarSign className="w-8 h-8 text-muted-foreground/60 mx-auto mb-2" />
+                <p className="text-xs.5 font-semibold text-muted-foreground">No pricing tiers registered yet</p>
+              </div>
+            )}
           </section>
 
-          {/* Capability Matrix */}
-          <section id="features" className="space-y-4">
+          {/* Technology Stack */}
+          <section id="techstack" className="space-y-4">
             <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              Capability Matrix
+              Technology Stack
             </h2>
-            <div className="rounded-2xl border border-border bg-card shadow-card overflow-hidden divide-y divide-border">
-              {featureMatrix.map((f) => (
-                <div key={f.feature} className="grid grid-cols-3 items-center gap-4 px-5 py-3.5 text-sm">
-                  <div className="font-bold text-slate-800 text-xs.5">{f.feature}</div>
-                  <div className="flex items-center justify-center gap-2">
-                    {f.you ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success/10 text-success text-[10px] font-bold uppercase">
-                        <Check className="w-3 h-3" /> Yes
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-danger/10 text-danger text-[10px] font-bold uppercase">
-                        <X className="w-3 h-3" /> No
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    {f.competitor ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success/10 text-success text-[10px] font-bold uppercase">
-                        <Check className="w-3 h-3" /> Yes
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-danger/10 text-danger text-[10px] font-bold uppercase">
-                        <X className="w-3 h-3" /> No
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Hiring Trends */}
-          <section id="hiring" className="space-y-4">
-            <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              Hiring Trends
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <Panel title="Hiring Distribution" subtitle="Active job openings by business department" padded={true}>
-                <div className="space-y-3.5 mt-2">
-                  {hiringTrends.map((trend) => (
-                    <div key={trend.department} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-semibold">
-                        <span>{trend.department}</span>
-                        <span className="text-primary">{trend.openRoles} openings</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden relative">
-                        <div
-                          className="h-full bg-gradient-primary rounded-full"
-                          style={{ width: `${(trend.openRoles / 16) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              <Panel title="Talent Movement Insights" subtitle="Autonomous Agent Recruitment Signal" padded={true}>
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl border border-warning/20 bg-warning/5 text-xs.5 leading-relaxed text-muted-foreground">
-                    <div className="flex items-center gap-2 font-bold text-warning mb-1">
-                      <AlertTriangle className="w-4 h-4" /> Senior Engineering Churn
-                    </div>
-                    3 senior ML hires moved to competitor in the last 90 days. Aggressive salary premiums and flexible remote setups detected in recruiting campaigns.
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <Briefcase className="w-5 h-5" />
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-bold text-slate-800">Department expansion: Engineering</div>
-                      <div className="text-muted-foreground mt-0.5">Estimated talent acquisition growth +24% YoY.</div>
-                    </div>
-                  </div>
-                </div>
-              </Panel>
-            </div>
-          </section>
-
-          {/* Customer Reviews */}
-          <section id="reviews" className="space-y-4">
-            <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              Customer Reviews
-            </h2>
-            <div className="grid sm:grid-cols-3 gap-4">
-              {reviews.map((r, i) => (
-                <div key={i} className="p-5 rounded-2xl border border-border bg-card/65 flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-center gap-0.5 text-warning">
-                      {Array.from({ length: r.rating }).map((_, j) => (
-                        <Star key={j} className="w-3.5 h-3.5 fill-current" />
-                      ))}
-                    </div>
-                    <p className="mt-3 text-xs.5 text-muted-foreground italic leading-relaxed">
-                      "{r.text}"
-                    </p>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground border-t border-border/50 pt-3">
-                    <span className="font-bold text-slate-700">{r.author}</span> · {r.role} <br />
-                    <span className="text-[10px] uppercase font-semibold text-primary/80 mt-1 inline-block">{r.source}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Recent News */}
-          <section id="news" className="space-y-4">
-            <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              Recent News
-            </h2>
-            <div className="rounded-2xl border border-border bg-card shadow-card overflow-hidden divide-y divide-border">
-              {news.map((n, i) => (
-                <div key={i} className="flex items-start gap-4 p-4.5 hover:bg-accent/15 transition">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Newspaper className="w-4.5 h-4.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-slate-800">{n.title}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {n.source} · {n.date}
-                    </div>
-                  </div>
+            {competitor.technologies && competitor.technologies.length > 0 ? (
+              <div className="flex flex-wrap gap-2.5">
+                {competitor.technologies.map((tech: any) => (
                   <span
-                    className={`text-[9.5px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider shrink-0 ${
-                      n.sentiment === "positive"
-                        ? "bg-success/10 text-success border-success/20"
-                        : n.sentiment === "negative"
-                          ? "bg-danger/10 text-danger border-danger/20"
-                          : "bg-muted text-muted-foreground border-border"
-                    }`}
+                    key={tech.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-xs font-semibold text-slate-800 shadow-sm"
                   >
-                    {n.sentiment}
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <span>{tech.technology}</span>
+                    {tech.category && (
+                      <span className="text-[10px] text-muted-foreground font-normal">({tech.category})</span>
+                    )}
                   </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center border border-dashed border-border rounded-2xl bg-card/40">
+                <Layers className="w-8 h-8 text-muted-foreground/60 mx-auto mb-2" />
+                <p className="text-xs.5 font-semibold text-muted-foreground">No technology stack modules mapped yet</p>
+              </div>
+            )}
           </section>
 
-          {/* AI recommendations */}
-          <section id="recommendations" className="space-y-4">
+          {/* Contacts & Leadership */}
+          <section id="contacts" className="space-y-4">
             <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
-              AI Recommendations
+              Contacts & Leadership
             </h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {recommendations.map((r) => (
-                <div key={r.title} className="p-5 rounded-2xl border border-border bg-card/65 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-bold uppercase tracking-wider">
-                        {r.tag}
-                      </span>
-                      <Lightbulb className="w-4.5 h-4.5 text-primary" />
+            {competitor.contacts && competitor.contacts.length > 0 ? (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {competitor.contacts.map((contact: any) => (
+                  <div key={contact.id} className="p-5 rounded-2xl border border-border bg-card/65 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-primary text-white flex items-center justify-center font-bold text-xs">
+                        {contact.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="text-xs.5 font-bold text-slate-800 truncate">{contact.name}</h4>
+                        <p className="text-[10px] text-muted-foreground font-semibold truncate">{contact.designation || "Executive"}</p>
+                      </div>
                     </div>
-                    <h3 className="text-sm.5 font-bold tracking-tight text-slate-800">{r.title}</h3>
-                    <p className="text-xs.5 text-muted-foreground leading-relaxed">{r.detail}</p>
+                    <div className="border-t border-border/50 pt-2.5 text-xs text-muted-foreground space-y-1">
+                      {contact.email && (
+                        <div className="truncate">Email: <span className="font-bold text-slate-700">{contact.email}</span></div>
+                      )}
+                      {contact.linkedin && (
+                        <div className="truncate">
+                          <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">
+                            LinkedIn Profile
+                          </a>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center border border-dashed border-border rounded-2xl bg-card/40">
+                <BriefcaseIcon className="w-8 h-8 text-muted-foreground/60 mx-auto mb-2" />
+                <p className="text-xs.5 font-semibold text-muted-foreground">No leadership contacts added yet</p>
+              </div>
+            )}
           </section>
 
           {/* Event Timeline */}
@@ -445,23 +332,30 @@ function ReportPage() {
             <h2 className="text-xl font-bold tracking-tight border-b border-border/80 pb-2 text-slate-800">
               Competitor Event Timeline
             </h2>
-            <div className="p-5 rounded-2xl border border-border bg-card/65 relative overflow-hidden">
-              <div className="absolute left-9 top-8 bottom-8 w-[1px] bg-border" />
-              <div className="space-y-6 relative z-10">
-                {history.slice(0, 5).map((evt) => (
-                  <div key={evt.id} className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full border border-border bg-card flex items-center justify-center text-primary shrink-0 relative z-20">
-                      <Layers className="w-3.5 h-3.5" />
+            {signals.length > 0 ? (
+              <div className="p-5 rounded-2xl border border-border bg-card/65 relative overflow-hidden">
+                <div className="absolute left-9 top-8 bottom-8 w-[1px] bg-border" />
+                <div className="space-y-6 relative z-10">
+                  {signals.map((evt) => (
+                    <div key={evt.id} className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full border border-border bg-card flex items-center justify-center text-primary shrink-0 relative z-20">
+                        <Layers className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-muted-foreground">{new Date(evt.capturedAt).toLocaleDateString()}</div>
+                        <div className="text-sm font-bold text-slate-800 mt-0.5">{evt.title}</div>
+                        {evt.summary && <div className="text-xs text-muted-foreground mt-0.5">{evt.summary}</div>}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-muted-foreground">{evt.date}</div>
-                      <div className="text-sm font-bold text-slate-800 mt-0.5">{evt.change}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Competitor: {evt.competitor} · ID: {evt.id}</div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-6 text-center border border-dashed border-border rounded-2xl bg-card/40">
+                <Calendar className="w-8 h-8 text-muted-foreground/60 mx-auto mb-2 animate-pulse" />
+                <p className="text-xs.5 font-semibold text-muted-foreground">No signals captured for this competitor profile yet</p>
+              </div>
+            )}
           </section>
 
         </div>
@@ -475,23 +369,25 @@ function ReportPage() {
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Domain:</span>
-                <span className="font-bold text-slate-800">{c.domain}</span>
+                <span className="font-bold text-slate-800">{competitor.domain}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between flex-wrap gap-1">
                 <span className="text-muted-foreground">HQ Location:</span>
-                <span className="font-bold text-slate-800 text-right truncate max-w-[120px]" title={c.hq}>{c.hq}</span>
+                <span className="font-bold text-slate-800 text-right truncate max-w-[120px]" title={competitor.headquarters}>{competitor.headquarters || "Unknown"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Founded:</span>
-                <span className="font-bold text-slate-800">{c.founded}</span>
+                <span className="text-muted-foreground">Status:</span>
+                <span className="font-bold text-slate-800 uppercase text-xs">{competitor.status}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Staff size:</span>
-                <span className="font-bold text-slate-800">{c.employees}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Confidence:</span>
-                <span className="font-bold text-success">91% (High)</span>
+                <span className="text-muted-foreground">Website:</span>
+                {competitor.website ? (
+                  <a href={competitor.website} target="_blank" rel="noopener noreferrer" className="font-bold text-primary hover:underline truncate max-w-[120px]">
+                    {competitor.website.replace(/https?:\/\//, "")}
+                  </a>
+                ) : (
+                  <span className="font-bold text-slate-800">None</span>
+                )}
               </div>
             </div>
           </div>
@@ -520,32 +416,4 @@ function ReportPage() {
       </div>
     </div>
   );
-}
-
-function toneBg(t: string) {
-  return t === "success"
-    ? "border-success/20 bg-success/5"
-    : t === "destructive"
-      ? "border-destructive/20 bg-destructive/5"
-      : t === "warning"
-        ? "border-warning/20 bg-warning/5"
-        : "border-primary/20 bg-primary/5";
-}
-function toneText(t: string) {
-  return t === "success"
-    ? "text-success"
-    : t === "destructive"
-      ? "text-destructive"
-      : t === "warning"
-        ? "text-warning"
-        : "text-primary";
-}
-function toneDot(t: string) {
-  return t === "success"
-    ? "bg-success"
-    : t === "destructive"
-      ? "bg-destructive"
-      : t === "warning"
-        ? "bg-warning"
-        : "bg-primary";
 }

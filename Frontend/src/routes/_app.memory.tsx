@@ -230,7 +230,7 @@ export function MemoryPage() {
   const [competitor, setCompetitor] = useState("Linear");
   const [snapDateA, setSnapDateA] = useState("Aug 12, 2026");
   const [snapDateB, setSnapDateB] = useState("Nov 12, 2026");
-  const [isMemoryAvailable, setIsMemoryAvailable] = useState(true);
+  const [isMemoryAvailable, setIsMemoryAvailable] = useState(false);
 
   const selectedCompData = competitorMemory[competitor] || competitorMemory.Linear;
   const dates = selectedCompData.snapshots.map((s) => s.date);
