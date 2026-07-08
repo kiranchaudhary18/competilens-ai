@@ -49,6 +49,15 @@ export class AuthService {
         },
       });
 
+      // Create Workspace Member (OWNER)
+      await tx.workspaceMember.create({
+        data: {
+          workspaceId: workspace.id,
+          userId: user.id,
+          role: "OWNER",
+        },
+      });
+
       // 3. Create default Workspace Setting
       await tx.workspaceSetting.create({
         data: {
@@ -73,7 +82,7 @@ export class AuthService {
       });
 
       return updatedUser;
-    });
+    }, { timeout: 30000 });
 
     // Email verification bypassed for direct signup dev flow
 

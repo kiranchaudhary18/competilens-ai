@@ -1,8 +1,8 @@
 import { createFileRoute, Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, ArrowRight, Download, Share2, Eye, Filter, Calendar, Search, ShieldAlert, Check } from "lucide-react";
-import { useState } from "react";
-import { competitors } from "@/data/mock";
+import { FileText, ArrowRight, Download, Share2, Eye, Filter, Calendar, Search, ShieldAlert, Check, RefreshCw } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../components/AuthContext";
 
 export const Route = createFileRoute("/_app/reports")({
   head: () => ({ meta: [{ title: "Intelligence Library — CompetiLens AI" }] }),
@@ -10,25 +10,55 @@ export const Route = createFileRoute("/_app/reports")({
 });
 
 function ReportsLayout() {
+  const { user, accessToken } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const isIndex = path === "/reports";
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [showShareModal, setShowShareModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const [competitors, setCompetitors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!accessToken || !isIndex) return;
+
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const headers = {
+          Authorization: `Bearer ${accessToken}`,
+          "x-workspace-id": user?.workspaceId || "",
+        };
+
+        const res = await fetch("http://localhost:5000/competitors", { headers });
+        const json = await res.json();
+        if (json.success) {
+          setCompetitors(json.data.competitors);
+        }
+      } catch (err) {
+        console.error("Failed to fetch competitor list for reports:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, [accessToken, user?.workspaceId, isIndex]);
 
   if (!isIndex) return <Outlet />;
 
   // Filter list
   const filteredCompetitors = competitors.filter((c) => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          c.industry.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const industryMatch = (c.industry || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = nameMatch || industryMatch;
     
     if (selectedFilter === "all") return matchesSearch;
-    if (selectedFilter === "high-threat") return matchesSearch && c.score >= 90;
-    if (selectedFilter === "new") return matchesSearch && c.status === "new";
+    if (selectedFilter === "high-threat") return matchesSearch && c.status === "ACTIVE";
+    if (selectedFilter === "new") return matchesSearch && c.status === "ACTIVE";
     return matchesSearch;
   });
 
@@ -45,6 +75,15 @@ function ReportsLayout() {
     e.stopPropagation();
     alert(`Downloading PDF report for ${name}...`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm font-semibold text-muted-foreground">Loading competitor briefings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -77,8 +116,7 @@ function ReportsLayout() {
         <div className="flex items-center gap-1.5 p-1 rounded-xl bg-card border border-border/80 w-full sm:w-auto overflow-x-auto">
           {[
             { id: "all", label: "All Reports" },
-            { id: "high-threat", label: "High Threat (90+)" },
-            { id: "new", label: "New Alerts" },
+            { id: "high-threat", label: "Active Profiles" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -112,41 +150,40 @@ function ReportsLayout() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-primary grid place-items-center text-md font-bold text-white shadow-glow select-none">
-                      {c.logo}
+                      {c.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <h3 className="text-md.5 font-bold tracking-tight text-slate-900 group-hover:text-primary transition-colors">
                         {c.name}
                       </h3>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border mt-1 inline-block font-semibold">
-                        {c.industry}
+                        {c.industry || "General"}
                       </span>
                     </div>
                   </div>
 
                   {/* Threat Score Card */}
                   <div className="text-right">
-                    <div className="text-[9.5px] uppercase tracking-wider text-muted-foreground font-semibold">Threat Score</div>
+                    <div className="text-[9.5px] uppercase tracking-wider text-muted-foreground font-semibold">Status</div>
                     <div className="flex items-center gap-1.5 mt-0.5 justify-end">
-                      <ShieldAlert className={`w-4 h-4 ${c.score >= 90 ? "text-danger" : "text-warning"}`} />
-                      <span className="text-md font-extrabold tracking-tight text-slate-800">{c.score}</span>
+                      <span className="text-xs font-extrabold tracking-tight text-primary uppercase">{c.status}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Description summary */}
                 <p className="text-xs.5 text-muted-foreground leading-relaxed h-12 overflow-hidden line-clamp-2">
-                  {c.summary}
+                  {c.description || c.domain}
                 </p>
 
                 {/* Metadata details */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 pt-4 mt-2.5">
                   <div className="flex items-center gap-1.5 font-medium">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span>Run {c.lastAnalyzed}</span>
+                    <span>Tracked since {new Date(c.createdAt).toLocaleDateString()}</span>
                   </div>
                   <span className="font-semibold text-primary/80 group-hover:text-primary transition-colors">
-                    12 analysis fields
+                    Live Feed Syncing
                   </span>
                 </div>
               </Link>
@@ -191,7 +228,7 @@ function ReportsLayout() {
         {filteredCompetitors.length === 0 && (
           <div className="col-span-2 p-12 text-center border border-dashed border-border rounded-[28px] bg-card/40">
             <ShieldAlert className="w-8 h-8 text-muted-foreground mx-auto" />
-            <h3 className="text-sm font-semibold mt-4">No reports found</h3>
+            <h3 className="text-sm font-semibold mt-4">No profiles found</h3>
             <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters or search keywords.</p>
           </div>
         )}

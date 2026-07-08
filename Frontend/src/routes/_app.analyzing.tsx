@@ -5,12 +5,18 @@ import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { agents } from "@/data/mock";
 
 export const Route = createFileRoute("/_app/analyzing")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      id: (search.id as string) || "linear",
+    };
+  },
   head: () => ({ meta: [{ title: "Generating intelligence — CompetiLens AI" }] }),
   component: LoadingScreen,
 });
 
 function LoadingScreen() {
   const nav = useNavigate();
+  const { id } = Route.useSearch();
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState<number[]>(agents.map(() => 0));
 
@@ -36,10 +42,10 @@ function LoadingScreen() {
       return () => clearTimeout(t);
     }
     if (step === agents.length - 1 && progress[step] >= 100) {
-      const t = setTimeout(() => nav({ to: "/reports/$id", params: { id: "linear" } }), 800);
+      const t = setTimeout(() => nav({ to: "/reports/$id", params: { id } }), 800);
       return () => clearTimeout(t);
     }
-  }, [progress, step, nav]);
+  }, [progress, step, nav, id]);
 
   const overall = Math.round(progress.reduce((a, b) => a + b, 0) / agents.length);
 
