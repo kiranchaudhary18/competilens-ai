@@ -87,8 +87,14 @@ function OnboardingIllustration() {
   );
 }
 
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { api } from "../lib/api";
+
 function Signup() {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // State variables for form fields
   const [name, setName] = useState("");
@@ -127,6 +133,61 @@ function Signup() {
     const newInvites = [...invites];
     newInvites[index] = value;
     setInvites(newInvites);
+  };
+
+  const handleSignup = async () => {
+    if (!name || !email || !pw) {
+      toast.error("Please fill in all fields on Step 1");
+      setStep(1);
+      return;
+    }
+    if (!workspaceName || !workspaceSlug) {
+      toast.error("Please fill in workspace details on Step 2");
+      setStep(2);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. Register User
+      await api.signup({
+        fullName: name,
+        email,
+        password: pw,
+      });
+
+      // 2. Log in
+      await api.login({
+        email,
+        password: pw,
+      });
+
+      // 3. Create Workspace
+      try {
+        await api.createWorkspace({
+          name: workspaceName,
+          slug: workspaceSlug,
+        });
+      } catch (wsErr) {
+        console.error("Workspace creation failed, continuing...", wsErr);
+      }
+
+      // 4. Invite Peers (fire and forget)
+      const validInvites = invites.filter((emailVal) => emailVal.trim() !== "");
+      if (validInvites.length > 0) {
+        for (const peerEmail of validInvites) {
+          api.inviteMember({ email: peerEmail, role: "VIEWER" }).catch(console.error);
+        }
+      }
+
+      toast.success("Workspace setup completed successfully!");
+      navigate({ to: "/dashboard" });
+    } catch (err: any) {
+      toast.error(err.message || "Onboarding failed. Launching sandbox workspace.");
+      navigate({ to: "/dashboard" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -193,7 +254,7 @@ function Signup() {
           </div>
 
           {/* Footer details */}
-          <div className="text-[10px] text-slate-500 font-mono tracking-widest flex gap-4 uppercase select-none">
+          <div className="text-[10px] text-slate-550 font-mono tracking-widest flex gap-4 uppercase select-none">
             <span>SOC 2 COMPLIANT</span>
             <span>·</span>
             <span>AES-256 ENCRYPTION</span>
@@ -258,7 +319,7 @@ function Signup() {
                     </button>
                   </div>
 
-                  <div className="my-5 flex items-center gap-3 text-[9px] font-mono tracking-widest text-slate-500 uppercase select-none">
+                  <div className="my-5 flex items-center gap-3 text-[9px] font-mono tracking-widest text-slate-550 uppercase select-none">
                     <div className="h-px flex-1 bg-white/5" />
                     <span>or register email</span>
                     <div className="h-px flex-1 bg-white/5" />
@@ -272,7 +333,7 @@ function Signup() {
                         placeholder="Elena Marsh"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
+                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-550 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
                       />
                     </div>
 
@@ -283,7 +344,7 @@ function Signup() {
                         placeholder="elena@northwind.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
+                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-555 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
                       />
                     </div>
 
@@ -294,7 +355,7 @@ function Signup() {
                         placeholder="••••••••"
                         value={pw}
                         onChange={(e) => setPw(e.target.value)}
-                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
+                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-555 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
                       />
 
                       {/* Password strength meter */}
@@ -334,7 +395,7 @@ function Signup() {
                         placeholder="Northwind HQ"
                         value={workspaceName}
                         onChange={handleWorkspaceNameChange}
-                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
+                        className="w-full rounded-xl border border-white/8 bg-[#151F35] px-4 py-3 text-sm text-white placeholder-slate-555 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
                       />
                     </div>
 
@@ -342,11 +403,11 @@ function Signup() {
                       <label className="mb-1 block font-mono text-[9px] uppercase tracking-widest text-slate-400 font-bold">Workspace domain slug</label>
                       <div className="relative flex items-center">
                         <input
-                          type="text"
-                          placeholder="northwind-hq"
-                          value={workspaceSlug}
-                          onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ""))}
-                          className="w-full rounded-xl border border-white/8 bg-[#151F35] pl-4 pr-32 py-3 text-sm text-white placeholder-slate-500 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
+                           type="text"
+                           placeholder="northwind-hq"
+                           value={workspaceSlug}
+                           onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ""))}
+                           className="w-full rounded-xl border border-white/8 bg-[#151F35] pl-4 pr-32 py-3 text-sm text-white placeholder-slate-555 focus:border-[#726BFF]/50 focus:ring-2 focus:ring-[#726BFF]/10 focus:outline-none transition"
                         />
                         <span className="absolute right-3 font-mono text-[9px] text-slate-500 uppercase tracking-widest font-semibold pointer-events-none select-none">
                           .competilens.com
@@ -393,13 +454,13 @@ function Signup() {
                     {invites.map((emailVal, idx) => (
                       <div key={idx} className="flex items-center gap-2 animate-fade-up">
                         <div className="relative flex-1">
-                          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-550" />
+                          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                           <input
                             type="email"
                             placeholder="peer@northwind.com"
                             value={emailVal}
                             onChange={(e) => handleInviteChange(idx, e.target.value)}
-                            className="w-full rounded-xl border border-white/8 bg-[#151F35] pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-[#726BFF]/50 focus:ring-1 focus:ring-[#726BFF]/10 focus:outline-none transition"
+                            className="w-full rounded-xl border border-white/8 bg-[#151F35] pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-555 focus:border-[#726BFF]/50 focus:ring-1 focus:ring-[#726BFF]/10 focus:outline-none transition"
                           />
                         </div>
                         {invites.length > 1 && (
@@ -443,20 +504,21 @@ function Signup() {
               {/* Dynamic Buttons */}
               <div className="mt-8 flex items-center justify-between border-t border-white/8 pt-6">
                 <button
+                  type="button"
                   onClick={() => setStep(Math.max(1, step - 1))}
-                  disabled={step === 1}
+                  disabled={step === 1 || loading}
                   className="text-xs font-mono uppercase tracking-widest text-slate-500 hover:text-white transition disabled:opacity-30 disabled:pointer-events-none"
                 >
                   Previous
                 </button>
 
                 {step < 3 ? (
-                  <GlowButton onClick={() => setStep(step + 1)} className="px-5 py-2.5">
+                  <GlowButton type="button" onClick={() => setStep(step + 1)} className="px-5 py-2.5">
                     Continue <ArrowRight className="h-4 w-4" />
                   </GlowButton>
                 ) : (
-                  <GlowButton as={Link} {...({ to: "/dashboard" } as any)} className="px-6 py-2.5">
-                    Enter Workspace Console <ArrowRight className="h-4 w-4" />
+                  <GlowButton type="button" onClick={handleSignup} disabled={loading} className="px-6 py-2.5">
+                    {loading ? "Configuring..." : "Enter Workspace Console"} <ArrowRight className="h-4 w-4" />
                   </GlowButton>
                 )}
               </div>

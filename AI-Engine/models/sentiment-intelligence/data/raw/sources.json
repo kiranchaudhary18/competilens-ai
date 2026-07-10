@@ -1,0 +1,25 @@
+{
+  "sources": [
+    {
+      "name": "saas_reviews",
+      "weight": 0.35
+    },
+    {
+      "name": "product_reviews",
+      "weight": 0.25
+    },
+    {
+      "name": "software_feedback",
+      "weight": 0.2
+    },
+    {
+      "name": "business_customer_comments",
+      "weight": 0.2
+    }
+  ],
+  "notes": [
+    "Prefer domain-specific feedback over generic movie reviews.",
+    "Maintain provenance and license awareness.",
+    "Use hard examples to capture mixed sentiment." 
+  ]
+}

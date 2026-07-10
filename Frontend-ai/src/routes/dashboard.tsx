@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
 import { GlassCard, Eyebrow, Chip, Sparkline, GlowButton } from "@/components/app/ui";
-import { competitors, signals, threatColor, signalColor } from "@/lib/mockData";
+import { competitors as mockCompetitors, signals as mockSignals, threatColor, signalColor } from "@/lib/mockData";
 import { ArrowRight, TrendingUp, Zap, Brain, Bell } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../lib/api";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — CompetiLens AI" }] }),
@@ -10,16 +12,38 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
+  const { data: competitorsData = mockCompetitors } = useQuery({
+    queryKey: ["competitors"],
+    queryFn: () => api.getCompetitors(),
+    retry: false,
+  });
+
+  const { data: signalsData = mockSignals } = useQuery({
+    queryKey: ["signals"],
+    queryFn: () => api.getSignals(),
+    retry: false,
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => api.getMe(),
+    retry: false,
+  });
+
+  // Calculate dynamic values
+  const liveSignalsCount = signalsData?.length || 0;
+  const userName = profile?.user?.fullName?.split(" ")[0] || "Narvin";
+
   return (
     <AppShell crumb="DASHBOARD">
       <div className="mb-3 flex items-center gap-3">
         <Eyebrow>Command · {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</Eyebrow>
       </div>
       <h1 className="font-display text-4xl leading-[1.1] tracking-tight md:text-5xl">
-        Good evening, <span className="italic text-gradient-cyan">Narvin</span>.
+        Good evening, <span className="italic text-gradient-cyan">{userName}</span>.
       </h1>
       <p className="mt-4 text-lg text-slate-400">
-        Your market moved in <span className="font-mono text-white">7</span> meaningful ways.
+        Your market moved in <span className="font-mono text-white">{liveSignalsCount}</span> meaningful ways.
       </p>
 
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
@@ -32,7 +56,7 @@ function Dashboard() {
             </div>
             <Link to="/competitors" className="text-xs text-[#7DD3FC] hover:underline">All competitors →</Link>
           </div>
-          <Orbit />
+          <Orbit competitors={competitorsData} />
         </GlassCard>
 
         {/* Signal stream */}
@@ -48,19 +72,27 @@ function Dashboard() {
             </span>
           </div>
           <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-            {signals.slice(0, 6).map((s) => (
-              <div key={s.id} className="rounded-2xl border border-white/5 p-3 hover:border-white/10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: signalColor(s.type), boxShadow: `0 0 8px ${signalColor(s.type)}` }} />
-                    <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: signalColor(s.type) }}>{s.type}</span>
-                    <span className="text-[10px] text-slate-500">· {s.competitor}</span>
+            {signalsData.slice(0, 6).map((s: any) => {
+              // Map DB Signal format to Mock Format if necessary
+              const type = (s.type || "news").toLowerCase();
+              const compName = s.competitor?.name || s.competitor || "Competitor";
+              const titleText = s.title || "";
+              const confidenceVal = s.confidence || 85;
+              const uniqueId = s.id || Math.random().toString();
+              return (
+                <div key={uniqueId} className="rounded-2xl border border-white/5 p-3 hover:border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: (signalColor as any)[type] || "#7DD3FC", boxShadow: `0 0 8px ${(signalColor as any)[type] || "#7DD3FC"}` }} />
+                      <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: (signalColor as any)[type] || "#7DD3FC" }}>{type}</span>
+                      <span className="text-[10px] text-slate-555">· {compName}</span>
+                    </div>
+                    <span className="font-mono text-[10px] text-[#7DD3FC]">{confidenceVal}%</span>
                   </div>
-                  <span className="font-mono text-[10px] text-[#7DD3FC]">{s.confidence}%</span>
+                  <div className="mt-1 text-sm">{titleText}</div>
                 </div>
-                <div className="mt-1 text-sm">{s.title}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </GlassCard>
       </div>
@@ -84,25 +116,31 @@ function Dashboard() {
         <GlassCard className="p-7">
           <Eyebrow>Threat Register</Eyebrow>
           <div className="mt-4 space-y-3">
-            {competitors.map(c => (
-              <div key={c.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-8 w-8 place-items-center rounded-full border font-mono text-[10px]" style={{ borderColor: threatColor(c.threatLevel), color: threatColor(c.threatLevel) }}>{c.code}</span>
-                  <div>
-                    <div className="text-sm">{c.name}</div>
-                    <div className="font-mono text-[10px] uppercase tracking-widest text-slate-500">{c.threatLevel}</div>
+            {competitorsData.slice(0, 4).map((c: any) => {
+              const code = c.code || c.name?.slice(0, 2).toUpperCase() || "CP";
+              const threatLevelStr = c.threatLevel || (c.threat > 75 ? "critical" : c.threat > 50 ? "high" : c.threat > 25 ? "medium" : "low");
+              const threatScore = c.threat ?? 50;
+              const uniqueId = c.id || Math.random().toString();
+              return (
+                <div key={uniqueId} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-8 w-8 place-items-center rounded-full border font-mono text-[10px]" style={{ borderColor: threatColor(threatLevelStr), color: threatColor(threatLevelStr) }}>{code}</span>
+                    <div>
+                      <div className="text-sm">{c.name}</div>
+                      <div className="font-mono text-[10px] uppercase tracking-widest text-slate-500">{threatLevelStr}</div>
+                    </div>
                   </div>
+                  <div className="font-mono text-xl" style={{ color: threatColor(threatLevelStr) }}>{threatScore}</div>
                 </div>
-                <div className="font-mono text-xl" style={{ color: threatColor(c.threatLevel) }}>{c.threat}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </GlassCard>
 
         <GlassCard className="p-7">
           <Eyebrow>Signal Trend · 30d</Eyebrow>
           <div className="mt-3 font-display text-5xl">
-            142 <span className="text-lg text-slate-500">signals</span>
+            142 <span className="text-lg text-slate-555">signals</span>
           </div>
           <div className="mt-1 font-mono text-xs text-emerald-400">▲ 23% vs last month</div>
           <div className="mt-6">
@@ -175,7 +213,7 @@ function Dashboard() {
   );
 }
 
-function Orbit() {
+function Orbit({ competitors }: { competitors: any[] }) {
   return (
     <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-[radial-gradient(ellipse_at_center,rgba(0,212,255,0.15),transparent_70%)]">
       <svg viewBox="0 0 800 500" className="absolute inset-0 h-full w-full">
@@ -189,17 +227,22 @@ function Orbit() {
           <text x="400" y="248" textAnchor="middle" fill="#94A3B8" fontFamily="JetBrains Mono" fontSize="9">YOU</text>
           <text x="400" y="262" textAnchor="middle" fill="#F8FAFC" fontFamily="Inter" fontSize="12" fontWeight="600">Lattice</text>
         </g>
-        {competitors.map(c => {
-          const cx = (c.x / 100) * 800;
-          const cy = (c.y / 100) * 500;
-          const r = c.size / 3;
+        {competitors.map((c: any) => {
+          const cx = ((c.x || Math.random() * 80 + 10) / 100) * 800;
+          const cy = ((c.y || Math.random() * 80 + 10) / 100) * 500;
+          const sizeVal = c.size || 60;
+          const r = sizeVal / 3;
+          const code = c.code || c.name?.slice(0, 2).toUpperCase() || "CP";
+          const threatLevelStr = c.threatLevel || (c.threat > 75 ? "critical" : c.threat > 50 ? "high" : c.threat > 25 ? "medium" : "low");
+          const threatVal = c.threat ?? 50;
+          const uniqueId = c.id || Math.random().toString();
           return (
-            <g key={c.id} className="animate-float" style={{ animationDelay: `${Math.random() * 3}s` }}>
-              <circle cx={cx} cy={cy} r={r + 8} fill="none" stroke={threatColor(c.threatLevel)} strokeOpacity="0.15" />
-              <circle cx={cx} cy={cy} r={r} fill="#0B1220" stroke={threatColor(c.threatLevel)} strokeWidth={1.5} />
-              <text x={cx} y={cy + 3} textAnchor="middle" fill={threatColor(c.threatLevel)} fontFamily="JetBrains Mono" fontSize="10" fontWeight="600">{c.code}</text>
+            <g key={uniqueId} className="animate-float" style={{ animationDelay: `${Math.random() * 3}s` }}>
+              <circle cx={cx} cy={cy} r={r + 8} fill="none" stroke={threatColor(threatLevelStr)} strokeOpacity="0.15" />
+              <circle cx={cx} cy={cy} r={r} fill="#0B1220" stroke={threatColor(threatLevelStr)} strokeWidth={1.5} />
+              <text x={cx} y={cy + 3} textAnchor="middle" fill={threatColor(threatLevelStr)} fontFamily="JetBrains Mono" fontSize="10" fontWeight="600">{code}</text>
               <text x={cx} y={cy + r + 18} textAnchor="middle" fill="#F8FAFC" fontFamily="Inter" fontSize="12">{c.name}</text>
-              <text x={cx} y={cy + r + 32} textAnchor="middle" fill="#64748B" fontFamily="JetBrains Mono" fontSize="10">T·{c.threat}</text>
+              <text x={cx} y={cy + r + 32} textAnchor="middle" fill="#64748B" fontFamily="JetBrains Mono" fontSize="10">T·{threatVal}</text>
             </g>
           );
         })}

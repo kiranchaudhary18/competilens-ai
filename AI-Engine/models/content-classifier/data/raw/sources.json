@@ -1,0 +1,33 @@
+{
+  "sources": [
+    {
+      "name": "official_company_blogs",
+      "weight": 0.25
+    },
+    {
+      "name": "release_notes",
+      "weight": 0.2
+    },
+    {
+      "name": "pricing_announcements",
+      "weight": 0.15
+    },
+    {
+      "name": "security_advisories",
+      "weight": 0.15
+    },
+    {
+      "name": "career_announcements",
+      "weight": 0.1
+    },
+    {
+      "name": "partnership_announcements",
+      "weight": 0.15
+    }
+  ],
+  "notes": [
+    "Prefer official and licensed sources.",
+    "Maintain provenance for every example.",
+    "Avoid scraping without clear usage rights."
+  ]
+}

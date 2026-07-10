@@ -1,0 +1,126 @@
+# ==========================================
+# Python Caching & Compiled Files
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+ipynb_checkpoints/
+
+# ==========================================
+# Virtual Environments
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+*env/
+*env*/
+bin/
+lib/
+lib64/
+include/
+share/
+pyvenv.cfg
+.pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+
+# ==========================================
+# Environment & Secrets (Security)
+# ==========================================
+.env
+.env.*
+!.env.example
+!.env.template
+secrets.yaml
+secrets/
+*.pem
+*.key
+*.pub
+.credentials/
+*credentials*.json
+
+# ==========================================
+# Logs and Databases
+# ==========================================
+*.log
+*.sqlite
+*.db
+
+# ==========================================
+# IDEs & System Files
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ==========================================
+# Large Binary & Serialization Formats (ML/DL)
+# ==========================================
+*.npy
+*.npz
+*.parquet
+*.pkl
+*.pickle
+*.joblib
+*.pt
+*.pth
+*.safetensors
+*.onnx
+*.pb
+*.tflite
+*.h5
+*.hdf5
+*.bin
+
+# ==========================================
+# AI/ML Artifacts & Datasets
+# ==========================================
+# Ignore all generated model checkpoints, weights, and evaluation artifacts
+**/artifacts/*
+!**/artifacts/README.md
+!**/artifacts/.gitkeep
+**/artifacts/**/*
+!**/artifacts/**/README.md
+!**/artifacts/**/.gitkeep
+
+# Ignore intermediate/processed datasets to prevent committing raw data
+**/data/processed/*
+!**/data/processed/README.md
+!**/data/processed/.gitkeep
+**/data/interim/*
+!**/data/interim/README.md
+!**/data/interim/.gitkeep
+
+# Ignore large raw datasets (allow specific template/sample data)
+**/data/raw/**/*.csv
+**/data/raw/**/*.json
+!**/data/raw/**/sources.json
+!**/data/raw/**/sample_sentiment.csv
+!**/data/raw/**/collected.csv
+!**/data/raw/**/README.md
+!**/data/raw/**/.gitkeep

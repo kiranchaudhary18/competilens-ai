@@ -1,0 +1,109 @@
+# Business Rules for Change Detection
+
+pricing_rules:
+  - name: "PRICE_INCREASE"
+    conditions:
+      - "old_price exists"
+      - "new_price exists"
+      - "new_price > old_price"
+    confidence_boost: 0.15
+    business_impact: 0.95
+    
+  - name: "PRICE_DECREASE"
+    conditions:
+      - "old_price exists"
+      - "new_price exists"
+      - "new_price < old_price"
+    confidence_boost: 0.15
+    business_impact: 0.90
+    
+  - name: "PRICING_TIER_CHANGE"
+    conditions:
+      - "plan_name modified"
+      - "pricing modified"
+    confidence_boost: 0.12
+    business_impact: 0.85
+
+feature_rules:
+  - name: "FEATURE_ADDED"
+    conditions:
+      - "new item not in old list"
+      - "item is feature-like"
+    confidence_boost: 0.10
+    business_impact: 0.75
+    
+  - name: "FEATURE_REMOVED"
+    conditions:
+      - "old item not in new list"
+      - "item was feature-like"
+    confidence_boost: 0.10
+    business_impact: 0.80
+    
+  - name: "FEATURE_UPGRADED"
+    conditions:
+      - "feature present in both"
+      - "new value > old value"
+      - "semantic similarity > 0.85"
+    confidence_boost: 0.12
+    business_impact: 0.85
+
+security_rules:
+  - name: "SECURITY_CAPABILITY_ADDED"
+    keywords:
+      - "sso|saml|oauth|mfa|2fa|two-factor"
+      - "encryption|ssl|tls|https"
+      - "audit|compliance|soc2|iso"
+    confidence_boost: 0.20
+    business_impact: 0.98
+    
+  - name: "SECURITY_CAPABILITY_REMOVED"
+    keywords:
+      - "sso|saml|oauth|mfa|2fa|two-factor"
+      - "encryption|ssl|tls|https"
+      - "audit|compliance|soc2|iso"
+    confidence_boost: 0.20
+    business_impact: 0.95
+
+hiring_rules:
+  - name: "HIRING_SURGE"
+    conditions:
+      - "open_roles_new > open_roles_old"
+      - "percentage_increase > 0.30"
+    confidence_boost: 0.10
+    business_impact: 0.70
+    
+  - name: "HIRING_REDUCTION"
+    conditions:
+      - "open_roles_new < open_roles_old"
+      - "percentage_decrease > 0.20"
+    confidence_boost: 0.10
+    business_impact: 0.75
+
+product_rules:
+  - name: "NEW_PRODUCT_LAUNCH"
+    conditions:
+      - "new_product_name added"
+      - "description length > 50"
+    confidence_boost: 0.15
+    business_impact: 0.85
+    
+  - name: "PRODUCT_DEPRECATION"
+    keywords:
+      - "deprecated|discontin|sunset|retire|legacy"
+    confidence_boost: 0.18
+    business_impact: 0.80
+
+integration_rules:
+  - name: "INTEGRATION_ADDED"
+    keywords:
+      - "integration|api|webhook|zapier|stripe|slack"
+    confidence_boost: 0.12
+    business_impact: 0.65
+    
+  - name: "INTEGRATION_REMOVED"
+    keywords:
+      - "integration|api|webhook"
+    conditions:
+      - "item removed"
+    confidence_boost: 0.12
+    business_impact: 0.70

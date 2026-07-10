@@ -1,0 +1,33 @@
+{
+  "test_case": "pricing_changes",
+  "old": {
+    "competitor_id": "stripe",
+    "snapshot_id": "snap_001",
+    "url": "https://stripe.com/pricing",
+    "raw_data": {
+      "pricing": {
+        "pro": "$29/month",
+        "enterprise": "$99/month"
+      },
+      "features": {
+        "pro": ["10 users", "Basic API", "Email support"],
+        "enterprise": ["Unlimited users", "Advanced API", "Phone support"]
+      }
+    }
+  },
+  "new": {
+    "competitor_id": "stripe",
+    "snapshot_id": "snap_002",
+    "url": "https://stripe.com/pricing",
+    "raw_data": {
+      "pricing": {
+        "pro": "$39/month",
+        "enterprise": "$119/month"
+      },
+      "features": {
+        "pro": ["Unlimited users", "Basic API", "Email support"],
+        "enterprise": ["Unlimited users", "Advanced API", "Priority phone support"]
+      }
+    }
+  }
+}
