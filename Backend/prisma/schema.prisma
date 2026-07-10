@@ -1,0 +1,737 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+
+enum CompetitorStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum SignalType {
+  NEWS
+  BLOG
+  PRICING
+  PRODUCT
+  HIRING
+  SOCIAL
+  TECH
+  PRESS
+  WEBSITE
+}
+
+enum SignalStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+enum SignalSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReportStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+model User {
+  id         String   @id @default(uuid())
+  fullName   String
+  email      String   @unique
+  password   String
+  avatar     String?
+  role       UserRole @default(MEMBER)
+  isVerified        Boolean   @default(false)
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  verificationToken String?
+  refreshToken      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  ownedWorkspaces Workspace[]    @relation("WorkspaceOwner")
+  workspaceId     String?
+  workspace       Workspace?     @relation("ActiveWorkspace", fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspaceMembers WorkspaceMember[]
+  sentInvitations WorkspaceInvitation[] @relation("InvitedByUser")
+  reports         Report[]       @relation("ReportAuthor")
+  notifications   Notification[]
+  activityLogs    ActivityLog[]
+  analysisJobs    AnalysisJob[]
+
+  @@index([email])
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  industry  String?
+  country   String?
+  status    WorkspaceStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownerId     String
+  owner       User              @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members     WorkspaceMember[]
+  activeUsers User[]            @relation("ActiveWorkspace")
+  invitations WorkspaceInvitation[]
+  competitors Competitor[]
+  reports     Report[]
+  settings    WorkspaceSetting?
+  signals     Signal[]
+  analysisJobs AnalysisJob[]
+  dataSources DataSource[]
+  memoryRecords MemoryRecord[]
+  historicalTrends HistoricalTrend[]
+  memoryRetrievalLogs MemoryRetrievalLog[]
+
+  @@index([slug])
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        Role      @default(VIEWER)
+  joinedAt    DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model WorkspaceInvitation {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  role        Role      @default(VIEWER)
+  token       String    @unique
+  expiresAt   DateTime
+  invitedBy   String
+  inviter     User      @relation("InvitedByUser", fields: [invitedBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([token])
+}
+
+model Competitor {
+  id           String           @id @default(uuid())
+  workspaceId  String
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name         String
+  domain       String
+  industry     String?
+  companySize  String?
+  headquarters String?
+  description  String?
+  website      String
+  linkedin     String?
+  twitter      String?
+  logo         String?
+  status       CompetitorStatus @default(ACTIVE)
+  categoryId   String?
+  category     CompetitorCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy    String?
+  updatedBy    String?
+  deletedAt    DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  contacts     CompetitorContact[]
+  technologies CompetitorTechnology[]
+  pricingPlans CompetitorPricing[]
+  social       CompetitorSocial?
+  tags         CompetitorTag[]
+  signals      Signal[]
+  memorySnapshots MemorySnapshot[]
+  reports      Report[]
+  analysisJobs AnalysisJob[]
+  dataSources DataSource[]
+  memoryRecords MemoryRecord[]
+  historicalTrends HistoricalTrend[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model CompetitorTag {
+  id           String       @id @default(uuid())
+  name         String       @unique
+  color        String
+  competitors  Competitor[]
+}
+
+model CompetitorCategory {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  competitors Competitor[]
+}
+
+model CompetitorContact {
+  id           String     @id @default(uuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  name         String
+  designation  String?
+  email        String?
+  linkedin     String?
+
+  @@index([competitorId])
+}
+
+model CompetitorTechnology {
+  id           String     @id @default(uuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  technology   String
+  category     String?
+
+  @@index([competitorId])
+}
+
+model CompetitorPricing {
+  id           String     @id @default(uuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  planName     String
+  price        Float
+  currency     String     @default("USD")
+  billingType  String
+  description  String?
+
+  @@index([competitorId])
+}
+
+model CompetitorSocial {
+  id           String     @id @default(uuid())
+  competitorId String     @unique
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  linkedin     String?
+  twitter      String?
+  github       String?
+  youtube      String?
+  instagram    String?
+}
+
+model Signal {
+  id           String           @id @default(uuid())
+  workspaceId  String
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competitorId String
+  competitor   Competitor       @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  type         SignalType
+  title        String
+  summary      String?
+  url          String?
+  source       String?
+  status       SignalStatus     @default(NEW)
+  publishedAt  DateTime?
+  capturedAt   DateTime         @default(now())
+  severity     SignalSeverity   @default(LOW)
+  metadata     Json?
+  createdAt    DateTime         @default(now())
+  attachments  SignalAttachment[]
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([type])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model SignalSource {
+  id         String     @id @default(uuid())
+  name       String
+  baseUrl    String?
+  type       SignalType
+  isEnabled  Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+}
+
+model SignalAttachment {
+  id        String   @id @default(uuid())
+  signalId  String
+  signal    Signal   @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  fileUrl   String
+  fileType  String?
+  createdAt DateTime @default(now())
+
+  @@index([signalId])
+}
+
+model Report {
+  id           String       @id @default(uuid())
+  workspaceId  String
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competitorId String?
+  competitor   Competitor?  @relation(fields: [competitorId], references: [id], onDelete: SetNull)
+  generatedBy  String
+  author       User         @relation("ReportAuthor", fields: [generatedBy], references: [id], onDelete: Cascade)
+  title        String
+  summary      String?
+  pdfUrl       String?
+  status       ReportStatus @default(PROCESSING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([generatedBy])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MemorySnapshot {
+  id           String     @id @default(uuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  snapshotDate DateTime   @default(now())
+  threatScore  Int
+  estimatedARR String?
+  pricing      String?
+  featureCount Int        @default(0)
+  strengths    Json
+  weaknesses   Json
+  notes        Json
+  createdAt    DateTime   @default(now())
+
+  @@index([competitorId])
+  @@index([snapshotDate])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  module    String
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model WorkspaceSetting {
+  id                   String    @id @default(uuid())
+  workspaceId          String    @unique
+  workspace            Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  theme                String    @default("light")
+  language             String    @default("en")
+  timezone             String    @default("UTC")
+  notificationsEnabled Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+enum AnalysisJobStatus {
+  QUEUED
+  PREPARING
+  CLASSIFYING
+  ANALYZING_SENTIMENT
+  DETECTING_CHANGES
+  BUILDING_EVIDENCE
+  STRATEGIC_ANALYSIS
+  VALIDATING_STRATEGY
+  GENERATING_REPORT
+  VALIDATING_REPORT
+  PERSISTING
+  COMPLETED
+  FAILED
+  CANCELLED
+  PARTIAL
+}
+
+model AnalysisJob {
+  id              String             @id @default(uuid())
+  workspaceId     String
+  workspace       Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competitorId    String
+  competitor      Competitor         @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  status          AnalysisJobStatus  @default(QUEUED)
+  requestedById   String
+  requestedBy     User               @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  idempotencyKey  String?
+  currentStage    String?
+  progress        Int                @default(0)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  failedAt        DateTime?
+  errorCode       String?
+  errorMessage    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  // Relations
+  stageExecutions AnalysisStageExecution[]
+  strategicAnalyses StrategicAnalysis[]
+  executiveReports ExecutiveReport[]
+  failures        AnalysisFailure[]
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([status])
+}
+
+model AnalysisStageExecution {
+  id           String      @id @default(uuid())
+  jobId        String
+  job          AnalysisJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  stageName    String
+  status       String
+  startedAt    DateTime    @default(now())
+  completedAt  DateTime?
+  durationMs   Int?
+  inputData    Json?
+  outputData   Json?
+  error        String?
+  createdAt    DateTime    @default(now())
+
+  @@index([jobId])
+  @@index([stageName])
+}
+
+model StrategicAnalysis {
+  id              String      @id @default(uuid())
+  jobId           String
+  job             AnalysisJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workspaceId     String
+  competitorId    String
+  competitorName  String
+  summary         String?
+  swotAnalysis    Json
+  gapAnalysis     Json
+  recommendations Json
+  validation      Json?
+  modelVersion    String
+  provider        String
+  createdAt       DateTime    @default(now())
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([jobId])
+}
+
+model ExecutiveReport {
+  id              String      @id @default(uuid())
+  jobId           String
+  job             AnalysisJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workspaceId     String
+  competitorId    String
+  title           String
+  content         Json
+  reportType      String
+  validation      Json?
+  modelVersion    String
+  provider        String
+  createdAt       DateTime    @default(now())
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([jobId])
+}
+
+model AnalysisFailure {
+  id           String      @id @default(uuid())
+  jobId        String
+  job          AnalysisJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  stageName    String
+  errorCode    String
+  errorMessage String
+  stackTrace   String?
+  createdAt    DateTime    @default(now())
+
+  @@index([jobId])
+}
+
+model DataSource {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competitorId   String
+  competitor     Competitor       @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  url            String
+  type           String
+  status         String           @default("ACTIVE")
+  schedule       String
+  config         Json?
+  lastSuccess    DateTime?
+  lastFailure    DateTime?
+  nextRun        DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  
+  // Relations
+  crawlJobs      CrawlJob[]
+  pageSnapshots  PageSnapshot[]
+
+  @@unique([workspaceId, competitorId, url, type])
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([status])
+}
+
+model CrawlJob {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  competitorId   String
+  dataSourceId   String
+  dataSource     DataSource       @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  status         String           @default("QUEUED")
+  startedAt      DateTime?
+  completedAt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  
+  // Relations
+  attempts       CrawlAttempt[]
+
+  @@index([dataSourceId])
+  @@index([status])
+}
+
+model CrawlAttempt {
+  id             String           @id @default(uuid())
+  crawlJobId     String
+  crawlJob       CrawlJob         @relation(fields: [crawlJobId], references: [id], onDelete: Cascade)
+  url            String
+  httpStatus     Int?
+  responseTimeMs Int?
+  pageSizeBytes  Int?
+  status         String
+  errorMessage   String?
+  createdAt      DateTime         @default(now())
+
+  @@index([crawlJobId])
+}
+
+model PageSnapshot {
+  id                 String       @id @default(uuid())
+  workspaceId        String
+  competitorId       String
+  dataSourceId       String
+  dataSource         DataSource   @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  url                String
+  canonicalUrl       String?
+  pageType           String
+  contentHash        String
+  normalizedText     String       @db.Text
+  structuredContent  Json?
+  httpStatus         Int?
+  etag               String?
+  lastModified       String?
+  capturedAt         DateTime     @default(now())
+  previousSnapshotId String?
+  createdAt          DateTime     @default(now())
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([dataSourceId])
+  @@index([url])
+  @@index([contentHash])
+}
+
+model DiscoveredUrl {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  competitorId   String
+  url            String
+  canonicalUrl   String?
+  priority       Float            @default(0.5)
+  depth          Int              @default(0)
+  source         String?
+  status         String           @default("DISCOVERED")
+  lastCrawl      DateTime?
+  nextCrawl      DateTime?
+  failureCount   Int              @default(0)
+  createdAt      DateTime         @default(now())
+
+  @@unique([workspaceId, competitorId, url])
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([status])
+}
+
+model FeedSubscription {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  competitorId   String
+  feedUrl        String
+  title          String?
+  lastFetchedAt  DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([workspaceId, competitorId, feedUrl])
+}
+
+model FeedItem {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  competitorId   String
+  feedUrl        String
+  guid           String
+  title          String
+  link           String
+  pubDate        DateTime?
+  contentHash    String
+  createdAt      DateTime         @default(now())
+
+  @@unique([workspaceId, competitorId, feedUrl, guid])
+}
+
+model MemoryRecord {
+  id              String      @id @default(uuid())
+  workspaceId     String
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competitorId    String
+  competitor      Competitor  @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  memoryType      String      // SNAPSHOT, SIGNAL, CHANGE_EVENT, PRICING_EVENT, SENTIMENT_TREND, STRATEGIC_INSIGHT, EXECUTIVE_REPORT, MARKET_PATTERN, USER_VALIDATED_INSIGHT
+  title           String
+  summary         String      @db.Text
+  importanceScore Float       @default(0.5)
+  confidenceScore Float       @default(0.5)
+  observedAt      DateTime    @default(now())
+  evidenceIds     String[]    // List of signal/change ids
+  metadata        Json?       // Catch-all
+  createdAt       DateTime    @default(now())
+
+  // Relations
+  linksFrom       MemoryLink[] @relation("LinkFrom")
+  linksTo         MemoryLink[] @relation("LinkTo")
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([memoryType])
+  @@index([observedAt])
+}
+
+model MemoryLink {
+  id             String       @id @default(uuid())
+  fromId         String
+  fromRecord     MemoryRecord @relation("LinkFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId           String
+  toRecord       MemoryRecord @relation("LinkTo", fields: [toId], references: [id], onDelete: Cascade)
+  linkType       String       // DUP, CAUSAL, SEQUENCE, RELATED
+  createdAt      DateTime     @default(now())
+
+  @@unique([fromId, toId, linkType])
+  @@index([fromId])
+  @@index([toId])
+}
+
+model HistoricalTrend {
+  id             String             @id @default(uuid())
+  workspaceId    String
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  competitorId   String
+  competitor     Competitor         @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  trendType      String             // PRICING, SENTIMENT, FEATURE_RECURRENCE
+  name           String
+  summary        String             @db.Text
+  status         String             // ACTIVE, COMPLETED
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  observations   TrendObservation[]
+
+  @@index([workspaceId])
+  @@index([competitorId])
+  @@index([trendType])
+}
+
+model TrendObservation {
+  id              String          @id @default(uuid())
+  trendId         String
+  trend           HistoricalTrend @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  value           Json
+  observedAt      DateTime        @default(now())
+  evidenceIds     String[]
+  createdAt       DateTime        @default(now())
+
+  @@index([trendId])
+  @@index([observedAt])
+}
+
+model MemoryRetrievalLog {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  queryType      String
+  resultsCount   Int
+  latencyMs      Int
+  createdAt      DateTime  @default(now())
+
+  @@index([workspaceId])
+}

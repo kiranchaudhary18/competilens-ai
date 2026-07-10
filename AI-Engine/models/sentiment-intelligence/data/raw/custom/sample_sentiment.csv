@@ -1,0 +1,4 @@
+id,text,label,source
+1,The software is powerful and easy to use,POSITIVE,custom
+2,The pricing is too expensive for our team,NEGATIVE,custom
+3,The release is fine but not transformative,NEUTRAL,custom

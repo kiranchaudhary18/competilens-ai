@@ -1,0 +1,76 @@
+# Base Configuration for Hybrid Change Detection Engine
+
+# Embedding Configuration
+embedding:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  model_dimension: 384
+  batch_size: 32
+  device: "cpu"  # or "cuda" if GPU available
+  cache_dir: "./artifacts/embeddings"
+
+# Similarity Thresholds
+thresholds:
+  high_similarity: 0.88
+  medium_similarity: 0.72
+  low_similarity: 0.50
+  exact_match: 0.99
+
+# Semantic Matching
+semantic:
+  chunk_size: 100
+  overlap: 20
+  use_pooling: true
+  distance_metric: "cosine"
+
+# Preprocessing
+preprocessing:
+  remove_html: true
+  remove_boilerplate: true
+  normalize_whitespace: true
+  remove_duplicates: true
+  extract_sections: true
+  min_content_length: 5
+
+# Scoring Weights
+scoring:
+  importance:
+    business_impact: 0.30
+    magnitude: 0.20
+    semantic_significance: 0.20
+    source_reliability: 0.15
+    persistence: 0.15
+  
+  confidence:
+    exact_evidence: 0.30
+    semantic_alignment: 0.25
+    rule_strength: 0.20
+    source_quality: 0.15
+    repeated_observation: 0.10
+
+# Severity Thresholds
+severity:
+  importance_low: 0.29
+  importance_medium: 0.59
+  importance_high: 0.84
+  importance_critical: 1.00
+
+# Noise Filtering
+noise_filter:
+  enable_dedup: true
+  enable_dynamic_filter: true
+  enable_false_positive_filter: true
+  dynamic_content_patterns:
+    - "timestamp|time|date|updated"
+    - "viewed.*times?|clicks?|impressions?"
+    - "counter|meter|gauge"
+  dedup_threshold: 0.95
+
+# Rules Engine
+rules:
+  enable_all_rules: true
+  rules_config_path: "./configs/rules.yaml"
+
+# Custom Model Integration
+custom_models:
+  content_classifier_enabled: true
+  sentiment_model_enabled: true

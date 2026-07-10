@@ -1,0 +1,5 @@
+validation_thresholds:
+  min_development_confidence: 0.70
+  min_risk_confidence: 0.70
+  min_action_confidence: 0.65
+  grounding_rate_threshold: 1.0
