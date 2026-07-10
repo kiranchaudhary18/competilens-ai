@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "competilens-ai-engine"
+version = "0.1.0"
+description = "ML engineering scaffold for CompetiLens"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.2.0",
+  "transformers>=4.41.0",
+  "pandas>=2.2.0",
+  "scikit-learn>=1.5.0",
+  "PyYAML>=6.0.0"
+]

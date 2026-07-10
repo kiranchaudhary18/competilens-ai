@@ -1,0 +1,50 @@
+# Scoring Configuration
+
+# Business Impact Scoring
+business_impact_weights:
+  PRICING_CHANGE: 0.95
+  FEATURE_CHANGE: 0.85
+  SECURITY_CHANGE: 0.98
+  HIRING_CHANGE: 0.70
+  PRODUCT_CHANGE: 0.75
+  INTEGRATION_CHANGE: 0.65
+  POLICY_CHANGE: 0.70
+  PERFORMANCE_CHANGE: 0.60
+
+# Magnitude Scoring
+magnitude_impact:
+  price_increase_percent:
+    low: [0.00, 0.10]    # 0-10% impact: 0.2
+    medium: [0.10, 0.30] # 10-30% impact: 0.5
+    high: [0.30, 1.00]   # 30%+ impact: 0.8
+  
+  feature_count_change:
+    low: [0.00, 0.20]
+    medium: [0.20, 0.50]
+    high: [0.50, 1.00]
+  
+  hiring_surge:
+    low: [0.00, 0.50]
+    medium: [0.50, 1.50]
+    high: [1.50, 10.00]
+
+# Semantic Significance Scoring
+semantic_significance_weights:
+  exact_match: 0.1
+  high_similarity: 0.3
+  medium_similarity: 0.6
+  low_similarity: 0.9
+  no_match: 1.0
+
+# Source Reliability (based on detection method)
+source_reliability:
+  exact_diff: 0.95
+  semantic_match: 0.80
+  rule_engine: 0.85
+  custom_model: 0.80
+
+# Persistence Scoring
+persistence:
+  first_observation: 0.3
+  confirmed_two_times: 0.6
+  confirmed_three_plus_times: 1.0

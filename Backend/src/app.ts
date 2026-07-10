@@ -10,6 +10,11 @@ import authRoutes from "./modules/auth/routes/auth.routes";
 import workspaceRoutes from "./modules/workspace/routes/workspace.routes";
 import competitorRoutes from "./modules/competitor/routes/competitor.routes";
 import signalRoutes from "./modules/signal/routes/signal.routes";
+import analysisRoutes from "./modules/analysis/analysis.routes";
+import collectionRoutes from "./modules/collection/collection.routes";
+import memoryRoutes from "./modules/memory/memory.routes";
+import notificationRoutes from "./modules/notifications/notification.routes";
+import reportRoutes from "./modules/reports/report.routes";
 
 const app = express();
 
@@ -53,6 +58,11 @@ app.use("/auth", authRoutes);
 app.use("/workspace", workspaceRoutes);
 app.use("/competitors", competitorRoutes);
 app.use("/signals", signalRoutes);
+app.use("/analyses", analysisRoutes);
+app.use("/collection", collectionRoutes);
+app.use("/memory", memoryRoutes);
+app.use("/notifications", notificationRoutes);
+app.use("/reports", reportRoutes);
 
 // 9. Base Health Route
 app.get("/", (req: Request, res: Response) => {

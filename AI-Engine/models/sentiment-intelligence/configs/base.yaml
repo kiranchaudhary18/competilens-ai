@@ -1,0 +1,10 @@
+model_name: distilbert-base-uncased
+max_length: 256
+num_labels: 3
+label_file: configs/labels.json
+batch_size: 16
+epochs: 3
+learning_rate: 2e-5
+weight_decay: 0.01
+seed: 42
+output_dir: artifacts/best-model

@@ -1,0 +1,9 @@
+id,text,label,source,source_url,collected_at
+1,"We launched a new enterprise pricing tier",PRICING,blog,https://example.com/pricing,2026-07-09
+2,"Introducing AI workflow automation for teams",FEATURE,release_notes,https://example.com/features,2026-07-09
+3,"New integration with Salesforce announced",INTEGRATION,announcement,https://example.com/integration,2026-07-09
+4,"Security patch released for enterprise customers",SECURITY,security_advisory,https://example.com/security,2026-07-09
+5,"Hiring senior machine learning engineers",HIRING,career_page,https://example.com/hiring,2026-07-09
+6,"Partnership announced with Microsoft",PARTNERSHIP,press_release,https://example.com/partnership,2026-07-09
+7,"Company launches new product for analytics",PRODUCT_LAUNCH,news,https://example.com/launch,2026-07-09
+8,"Company publishes latest company update",GENERAL_NEWS,news,https://example.com/news,2026-07-09

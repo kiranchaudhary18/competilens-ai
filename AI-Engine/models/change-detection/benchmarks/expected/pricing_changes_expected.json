@@ -1,0 +1,32 @@
+{
+  "test_case": "pricing_changes_expected",
+  "total_changes": 4,
+  "changes": [
+    {
+      "change_type": "PRICE_INCREASE",
+      "entity": "Pro Plan",
+      "old_value": "$29/month",
+      "new_value": "$39/month",
+      "expected_severity": "HIGH"
+    },
+    {
+      "change_type": "PRICE_INCREASE",
+      "entity": "Enterprise Plan",
+      "old_value": "$99/month",
+      "new_value": "$119/month",
+      "expected_severity": "HIGH"
+    },
+    {
+      "change_type": "FEATURE_UPGRADED",
+      "old_value": "10 users",
+      "new_value": "Unlimited users",
+      "expected_severity": "HIGH"
+    },
+    {
+      "change_type": "FEATURE_UPGRADED",
+      "old_value": "Email support",
+      "new_value": "Priority phone support",
+      "expected_severity": "MEDIUM"
+    }
+  ]
+}
