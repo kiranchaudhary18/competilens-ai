@@ -2,10 +2,10 @@ import dns from "dns";
 dns.setDefaultResultOrder("ipv4first");
 
 import dotenv from "dotenv";
-import app from "./app";
 
-// Load environment variables
 dotenv.config();
+
+import app from "./app";
 
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || "development";

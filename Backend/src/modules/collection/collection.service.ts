@@ -7,7 +7,7 @@ import { HtmlExtractor } from "./extractors/html.extractor";
 import { TextNormalizer } from "./normalization/text-normalizer";
 import { SnapshotService } from "./snapshots/snapshot.service";
 import { SignalRepository } from "../signal/repository/signal.repository";
-import { DataSourceType, CrawlJobStatus, SignalType, SignalSeverity } from "@prisma/client";
+import { SignalType, SignalSeverity } from "@prisma/client";
 import { URL } from "url";
 
 export class CollectionService {
@@ -17,7 +17,7 @@ export class CollectionService {
   public static async addDataSource(
     workspaceId: string,
     competitorId: string,
-    type: DataSourceType,
+    type: string,
     url: string
   ) {
     // Basic validation
@@ -32,7 +32,7 @@ export class CollectionService {
     const source = await CollectionRepository.createDataSource(workspaceId, competitorId, type, url);
 
     // If RSS/ATOM, set up a feed subscription
-    if (type === DataSourceType.RSS || type === DataSourceType.ATOM) {
+    if (type === "RSS" || type === "ATOM") {
       await CollectionRepository.createFeedSubscription(workspaceId, competitorId, source.id, url);
     }
 
@@ -86,9 +86,9 @@ export class CollectionService {
     });
 
     try {
-      if (source.type === DataSourceType.WEBSITE) {
+      if (source.type === "WEBSITE") {
         await this.crawlWebsiteSource(jobId, source);
-      } else if (source.type === DataSourceType.RSS || source.type === DataSourceType.ATOM) {
+      } else if (source.type === "RSS" || source.type === "ATOM") {
         await this.crawlFeedSource(jobId, source);
       }
 

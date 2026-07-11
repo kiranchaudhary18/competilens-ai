@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const startAnalysisSchema = z.object({
   competitorId: z.string({
-    required_error: "Competitor ID is required",
+    message: "Competitor ID is required",
   }).uuid("Invalid Competitor ID format"),
   analysisType: z.enum(["FULL", "QUICK"]).default("FULL"),
   timeRange: z

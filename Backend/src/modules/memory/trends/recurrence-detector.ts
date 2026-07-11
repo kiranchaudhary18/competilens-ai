@@ -34,7 +34,10 @@ export class RecurrenceDetector {
 
     // 2. Detect Recurring Sentiment Swings
     const sentimentTrends = memories.filter((m) => m.memoryType === "SENTIMENT_TREND");
-    const negativeSentimentTrends = sentimentTrends.filter((t) => t.metadata?.shift < -0.1);
+    const negativeSentimentTrends = sentimentTrends.filter((t) => {
+      const metadata = (t.metadata as Record<string, any> | null) ?? {};
+      return (metadata.shift ?? 0) < -0.1;
+    });
     if (negativeSentimentTrends.length >= 2) {
       await IngestionPolicy.evaluateAndIngest({
         workspaceId,

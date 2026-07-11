@@ -120,13 +120,15 @@ export class StrategyStage extends AnalysisStage {
       model: "gemini-1.5-flash",
     });
 
-    if (response.status !== "success" || !response.analysis) {
-      throw new Error(`Strategic Analysis failed: ${response.error || "Unknown Error"}`);
+    const responseData = response as { status?: string; analysis?: any; error?: string };
+
+    if (responseData.status !== "success" || !responseData.analysis) {
+      throw new Error(`Strategic Analysis failed: ${responseData.error || "Unknown Error"}`);
     }
 
     // Perform strategy validation
-    const validationResult = this.validateStrategicAnalysis(response.analysis, context.evidencePack);
-    context.strategicAnalysis = response.analysis;
+    const validationResult = this.validateStrategicAnalysis(responseData.analysis, context.evidencePack);
+    context.strategicAnalysis = responseData.analysis;
     context.strategicValidation = validationResult;
 
     if (!validationResult.valid) {
@@ -136,7 +138,7 @@ export class StrategyStage extends AnalysisStage {
     }
 
     return {
-      strategicAnalysis: response.analysis,
+      strategicAnalysis: responseData.analysis,
       strategicValidation: validationResult,
     };
   }

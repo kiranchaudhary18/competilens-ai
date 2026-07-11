@@ -13,7 +13,7 @@ export class TemporalComparator {
     // Get historical pricing data from competitor pricing records
     const pricingHistory = await prisma.competitorPricing.findMany({
       where: { competitorId },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { id: "desc" },
       take: 20,
     });
 
@@ -24,13 +24,13 @@ export class TemporalComparator {
     const newPricing = pricingHistory.slice(0, midpoint).map((p) => ({
       name: p.planName,
       price: Number(p.price),
-      billingPeriod: p.billingPeriod,
+      billingPeriod: p.billingType || "MONTHLY",
     }));
 
     const oldPricing = pricingHistory.slice(midpoint).map((p) => ({
       name: p.planName,
       price: Number(p.price),
-      billingPeriod: p.billingPeriod,
+      billingPeriod: p.billingType || "MONTHLY",
     }));
 
     return PricingComparator.comparePlans(oldPricing, newPricing);

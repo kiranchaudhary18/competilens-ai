@@ -26,8 +26,6 @@ const agentList = [
   { name: "Strategy Agent", icon: TrendingUp, tint: "#F4B84F" },
 ];
 
-const suggested = ["Why did Nova reviews drop?", "How is Vertex positioned in EU?", "What is Acme's next likely move?"];
-
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { toast } from "sonner";

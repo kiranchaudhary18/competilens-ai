@@ -1,11 +1,10 @@
 import prisma from "../../config/db";
-import { DataSourceType, CrawlJobStatus } from "@prisma/client";
 
 export class CollectionRepository {
   public static async createDataSource(
     workspaceId: string,
     competitorId: string,
-    type: DataSourceType,
+    type: string,
     url: string,
     schedule = "0 0 * * *" // Default daily schedule
   ) {
@@ -51,7 +50,7 @@ export class CollectionRepository {
         workspaceId,
         competitorId,
         dataSourceId,
-        status: CrawlJobStatus.QUEUED,
+        status: "QUEUED",
       },
     });
   }
@@ -67,7 +66,7 @@ export class CollectionRepository {
     crawlJobId: string,
     url: string,
     status: string,
-    durationMs?: number,
+    responseTimeMs?: number,
     httpStatus?: number,
     errorMessage?: string,
     pageSizeBytes?: number
@@ -77,7 +76,7 @@ export class CollectionRepository {
         crawlJobId,
         url,
         status,
-        durationMs,
+        responseTimeMs,
         httpStatus,
         errorMessage,
         pageSizeBytes,
@@ -105,10 +104,12 @@ export class CollectionRepository {
         competitorId: params.competitorId,
         dataSourceId: params.dataSourceId,
         url: params.url,
-        rawHtml: params.rawHtml,
         normalizedText: params.normalizedText,
         contentHash: params.contentHash,
-        structuredContent: params.structuredContent || {},
+        structuredContent: {
+          ...(params.structuredContent || {}),
+          rawHtml: params.rawHtml,
+        },
         etag: params.etag,
         lastModified: params.lastModified,
         pageType: params.pageType || "WEBSITE",

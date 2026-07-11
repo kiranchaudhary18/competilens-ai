@@ -9,21 +9,21 @@ export class NotificationPolicy {
     try {
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        include: {
-          memberships: {
-            include: {
-              workspace: {
-                include: { settings: true },
-              },
-            },
-          },
-        },
       });
 
       if (!user) return false;
 
+      const memberships = await prisma.workspaceMember.findMany({
+        where: { userId: payload.userId },
+        include: {
+          workspace: {
+            include: { settings: true },
+          },
+        },
+      });
+
       // Check if user has global workspace notifications enabled
-      const defaultSetting = user.memberships.find((m) => m.workspace?.settings?.notificationsEnabled);
+      const defaultSetting = memberships.find((m) => m.workspace?.settings?.notificationsEnabled);
       if (defaultSetting && !defaultSetting.workspace.settings?.notificationsEnabled) {
         console.log(`[NotificationPolicy] Alerts disabled for user's workspace settings. Suppressing.`);
         return false;

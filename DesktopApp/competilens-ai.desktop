@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=CompetiLens AI Desktop
+Comment=Secure desktop access to backend and AI services
+Exec=/home/narvin/Documents/Web/competilens-ai/DesktopApp/run.sh
+Path=/home/narvin/Documents/Web/competilens-ai/DesktopApp
+Terminal=false
+Categories=Office;Utility;
+StartupNotify=true
+Icon=utilities-terminal

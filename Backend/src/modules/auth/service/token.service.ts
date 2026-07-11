@@ -5,6 +5,7 @@ export interface TokenPayload {
   email: string;
   role: string;
   fullName: string;
+  workspaceId?: string;
 }
 
 export class TokenService {

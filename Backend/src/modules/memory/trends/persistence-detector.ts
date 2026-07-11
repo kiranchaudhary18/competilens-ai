@@ -12,9 +12,10 @@ export class PersistenceDetector {
     const sentimentTrends = memories.filter((m) => m.memoryType === "SENTIMENT_TREND");
 
     if (sentimentTrends.length >= 3) {
-      const consecutiveNegative = sentimentTrends.slice(0, 3).every(
-        (t) => (t.metadata?.shift || 0) < 0 || (t.metadata?.newPositiveRatio || 1) < 0.25
-      );
+      const consecutiveNegative = sentimentTrends.slice(0, 3).every((t) => {
+        const metadata = (t.metadata as Record<string, any> | null) ?? {};
+        return (metadata.shift || 0) < 0 || (metadata.newPositiveRatio || 1) < 0.25;
+      });
 
       if (consecutiveNegative) {
         await IngestionPolicy.evaluateAndIngest({
