@@ -10,8 +10,6 @@ export const Route = createFileRoute("/reports")({
   component: Reports,
 });
 
-const tabs = ["all", "Executive", "SWOT", "Pricing", "Market", "Competitor"];
-
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 

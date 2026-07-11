@@ -93,8 +93,8 @@ export class SnapshotService {
         console.log(`[SnapshotService] Detected ${diffResult.changes.length} changes for ${url}`);
 
         // Define severity and type of signal
-        let highestSeverity = SignalSeverity.LOW;
-        let signalType = SignalType.WEBSITE;
+        let highestSeverity: SignalSeverity = SignalSeverity.LOW;
+        let signalType: SignalType = SignalType.WEBSITE;
 
         // Map severity levels
         const severityMap: Record<string, SignalSeverity> = {
@@ -113,14 +113,14 @@ export class SnapshotService {
             (changeSeverity === SignalSeverity.HIGH && highestSeverity !== SignalSeverity.CRITICAL) ||
             (changeSeverity === SignalSeverity.MEDIUM && highestSeverity === SignalSeverity.LOW)
           ) {
-            highestSeverity = changeSeverity;
+            highestSeverity = changeSeverity as SignalSeverity;
           }
 
           // Check if pricing or product change
           if (change.change_type === "pricing" || url.includes("pricing")) {
-            signalType = SignalType.PRICING;
+            signalType = SignalType.PRICING as SignalType;
           } else if (change.change_type === "feature" || change.change_type === "product") {
-            signalType = SignalType.PRODUCT;
+            signalType = SignalType.PRODUCT as SignalType;
           }
 
           changeDescriptions.push(
@@ -168,11 +168,15 @@ export class SnapshotService {
 
         // Send workspace alerts if the update is critical
         if (highestSeverity === SignalSeverity.HIGH || highestSeverity === SignalSeverity.CRITICAL) {
+          const severityLabel = highestSeverity === SignalSeverity.CRITICAL ? "critical" : "high";
+          const eventType = signalType === SignalType.PRICING ? "PRICING_CHANGE" : "CRITICAL_CHANGE";
+          const titleSuffix = signalType === SignalType.PRICING ? "Pricing Update" : "Critical Page Change";
+
           await NotificationService.notifyWorkspace({
             workspaceId,
-            event: signalType === SignalType.PRICING ? "PRICING_CHANGE" : "CRITICAL_CHANGE",
-            title: `${signalType === SignalType.PRICING ? "Pricing Update" : "Critical Page Change"} detected`,
-            message: `A ${highestSeverity.toLowerCase()} change was detected at ${url}. ${signal.title}`,
+            event: eventType,
+            title: `${titleSuffix} detected`,
+            message: `A ${severityLabel} change was detected at ${url}. ${signal.title}`,
             severity: highestSeverity === SignalSeverity.CRITICAL ? "ERROR" : "WARNING",
             dedupeKey: `critical_change_${competitorId}_${dataSourceId}`,
           }).catch((err) =>

@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { PrismaClient, UserRole, CompetitorStatus, SignalType, SignalSeverity, ReportStatus, NotificationType } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -18,14 +19,16 @@ async function main() {
   await prisma.user.deleteMany({});
 
   // 2. Create Admin User
+  const adminPasswordHash = await bcrypt.hash("password123", 12);
   const adminUser = await prisma.user.create({
     data: {
       fullName: "Alex Kim",
       email: "alex@competilens.ai",
-      password: "$argon2id$v=19$m=65536,t=3,p=4$qFq8yY6T...hash", // mock password
+      password: adminPasswordHash,
       avatar: "https://competilens.ai/avatars/alex.jpg",
       role: UserRole.ADMIN,
       isVerified: true,
+      emailVerified: true,
     },
   });
   console.log(`Created Admin User: ${adminUser.email}`);
@@ -63,11 +66,11 @@ async function main() {
 
   // 5. Create 5 Competitors
   const competitorsData = [
-    { name: "Linear", website: "https://linear.app", industry: "Project Management", logo: "https://logo.clearbit.com/linear.app" },
-    { name: "Notion", website: "https://notion.so", industry: "Workspace & Docs", logo: "https://logo.clearbit.com/notion.so" },
-    { name: "Vercel", website: "https://vercel.com", industry: "Developer CDN Platform", logo: "https://logo.clearbit.com/vercel.com" },
-    { name: "Coda", website: "https://coda.io", industry: "Collaborative Documents", logo: "https://logo.clearbit.com/coda.io" },
-    { name: "Jira", website: "https://atlassian.com/software/jira", industry: "Enterprise Project Mgmt", logo: "https://logo.clearbit.com/jira.com" },
+    { name: "Linear", domain: "linear.app", website: "https://linear.app", industry: "Project Management", logo: "https://logo.clearbit.com/linear.app" },
+    { name: "Notion", domain: "notion.so", website: "https://notion.so", industry: "Workspace & Docs", logo: "https://logo.clearbit.com/notion.so" },
+    { name: "Vercel", domain: "vercel.com", website: "https://vercel.com", industry: "Developer CDN Platform", logo: "https://logo.clearbit.com/vercel.com" },
+    { name: "Coda", domain: "coda.io", website: "https://coda.io", industry: "Collaborative Documents", logo: "https://logo.clearbit.com/coda.io" },
+    { name: "Jira", domain: "atlassian.com", website: "https://atlassian.com/software/jira", industry: "Enterprise Project Mgmt", logo: "https://logo.clearbit.com/jira.com" },
   ];
 
   const competitors = [];
@@ -76,6 +79,7 @@ async function main() {
       data: {
         workspaceId: workspace.id,
         name: comp.name,
+        domain: comp.domain,
         website: comp.website,
         logo: comp.logo,
         description: `Market leading competitor focused on ${comp.industry}.`,
@@ -90,7 +94,7 @@ async function main() {
   // 6. Create 25 Signals (spread across competitors)
   const signalTitles = [
     { title: "Pricing Plan Restructured", desc: "Added a new $10 Pro tier while capping free workspaces.", type: SignalType.PRICING, severity: SignalSeverity.HIGH },
-    { title: "AI Assistant Feature Launched", desc: "Rolled out automatic summarization capabilities in editor.", type: SignalType.FEATURE, severity: SignalSeverity.MEDIUM },
+    { title: "AI Assistant Feature Launched", desc: "Rolled out automatic summarization capabilities in editor.", type: SignalType.PRODUCT, severity: SignalSeverity.MEDIUM },
     { title: "Key VP of Product Hired", desc: "Poached key platform engineering leader from Google Cloud.", type: SignalType.HIRING, severity: SignalSeverity.HIGH },
     { title: "Series C Funding Secured", desc: "Closed a $45M Series C round valuing the business at $900M.", type: SignalType.NEWS, severity: SignalSeverity.CRITICAL },
     { title: "New Landing Page Design", desc: "Completely refreshed typography and layout design system.", type: SignalType.WEBSITE, severity: SignalSeverity.LOW },
@@ -102,13 +106,15 @@ async function main() {
     const template = signalTitles[i % signalTitles.length];
     await prisma.signal.create({
       data: {
+        workspaceId: workspace.id,
         competitorId: comp.id,
         title: `${comp.name}: ${template.title}`,
-        description: `${comp.name} has ${template.desc.toLowerCase()}`,
+        summary: `${comp.name} has ${template.desc.toLowerCase()}`,
         type: template.type,
         severity: template.severity,
-        sourceUrl: `${comp.website}/news-and-updates-row-${i}`,
-        detectedAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000), // progressive days ago
+        url: `${comp.website}/news-and-updates-row-${i}`,
+        source: comp.website,
+        publishedAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
       },
     });
     signalCount++;

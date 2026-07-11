@@ -16,7 +16,7 @@ export const createSignalSchema = z.object({
   status: z.nativeEnum(SignalStatus).optional(),
   publishedAt: z.string().datetime({ message: "Invalid ISO datetime format for publishedAt" }).optional().or(z.literal("")),
   severity: z.nativeEnum(SignalSeverity).optional(),
-  metadata: z.record(z.any()).optional(), // Flexible JSON payload for any signal type
+  metadata: z.record(z.string(), z.any()).optional(), // Flexible JSON payload for any signal type
   attachments: z.array(attachmentSchema).optional(),
 });
 

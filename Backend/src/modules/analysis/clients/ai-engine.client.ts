@@ -1,5 +1,7 @@
-import { uuid } from "uuidv4"; // Wait, we have uuid, let's import { v4 as uuidv4 } from "uuid";
+import dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
+
+dotenv.config();
 
 const AI_ENGINE_URL = process.env.AI_ENGINE_URL || "http://localhost:8000";
 const TIMEOUT_MS = 60000; // 60s timeout for heavy LLM operations

@@ -51,12 +51,14 @@ export class ReportStage extends AnalysisStage {
       model: "gemini-1.5-flash",
     });
 
-    if (response.status !== "success" || !response.report) {
-      throw new Error(`Executive Report generation failed: ${response.error || "Unknown Error"}`);
+    const responseData = response as { status?: string; report?: any; error?: string };
+
+    if (responseData.status !== "success" || !responseData.report) {
+      throw new Error(`Executive Report generation failed: ${responseData.error || "Unknown Error"}`);
     }
 
-    const validationResult = this.validateReport(response.report);
-    context.executiveReport = response.report;
+    const validationResult = this.validateReport(responseData.report);
+    context.executiveReport = responseData.report;
     context.reportValidation = validationResult;
 
     if (!validationResult.valid) {
@@ -65,7 +67,7 @@ export class ReportStage extends AnalysisStage {
     }
 
     return {
-      executiveReport: response.report,
+      executiveReport: responseData.report,
       reportValidation: validationResult,
     };
   }

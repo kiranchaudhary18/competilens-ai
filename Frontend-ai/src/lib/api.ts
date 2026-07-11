@@ -1,6 +1,29 @@
 import { reports, memoryTracks, history, competitors as mockCompetitors, signals as mockSignals, alerts as mockAlerts } from "./mockData";
 
-const API_BASE_URL = "http://localhost:5000";
+declare global {
+  interface Window {
+    desktopApi?: {
+      getConfig: () => {
+        backendUrl?: string;
+        aiEngineUrl?: string;
+        appName?: string;
+      };
+    };
+  }
+}
+
+const getApiBaseUrl = (): string => {
+  if (typeof window !== "undefined") {
+    const desktopConfig = window.desktopApi?.getConfig?.();
+    if (desktopConfig?.backendUrl) {
+      return desktopConfig.backendUrl.replace(/\/$/, "");
+    }
+  }
+
+  return (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class APIClient {
   private getAccessToken(): string | null {

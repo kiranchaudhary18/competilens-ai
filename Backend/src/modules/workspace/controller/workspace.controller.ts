@@ -9,6 +9,7 @@ import {
   updateSettingsSchema,
 } from "../validation/workspace.validation";
 import prisma from "../../../config/db";
+import { Role } from "@prisma/client";
 
 export class WorkspaceController {
   public static async create(req: WorkspaceRequest, res: Response, next: NextFunction): Promise<void> {
@@ -188,7 +189,7 @@ export class WorkspaceController {
 
       const member = await WorkspaceService.updateMemberRole(
         memberId,
-        validatedData.role,
+        validatedData.role as Role,
         currentUserId,
         workspaceId
       );

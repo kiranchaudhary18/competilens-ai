@@ -10,9 +10,7 @@ export const createWorkspaceSchema = z.object({
 
 export const inviteMemberSchema = z.object({
   email: z.string().email("Invalid email address"),
-  role: z.nativeEnum(Role, {
-    errorMap: () => ({ message: "Invalid role: must be OWNER, ADMIN, ANALYST, or VIEWER" }),
-  }),
+  role: z.nativeEnum(Role),
 });
 
 export const acceptInvitationSchema = z.object({
@@ -20,8 +18,8 @@ export const acceptInvitationSchema = z.object({
 });
 
 export const updateMemberRoleSchema = z.object({
-  role: z.enum([Role.ADMIN, Role.ANALYST, Role.VIEWER], {
-    errorMap: () => ({ message: "Invalid role: must be ADMIN, ANALYST, or VIEWER" }),
+  role: z.enum([Role.ADMIN, Role.ANALYST, Role.VIEWER] as [string, ...string[]], {
+    message: "Invalid role: must be ADMIN, ANALYST, or VIEWER",
   }),
 });
 
